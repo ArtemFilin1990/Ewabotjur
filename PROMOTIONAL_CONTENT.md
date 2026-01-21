@@ -358,7 +358,7 @@ A: No. This is explicitly out of scope. The bot generates professional legal doc
 A: The Contract Agent scenario is optimized for Russian Federation legal jurisdiction. Other scenarios apply general legal principles and should be reviewed by professionals familiar with the relevant jurisdiction.
 
 **Q: How much does it cost?**  
-A: [Pricing information to be added based on business model—currently in SRS as "public with limits or corporate whitelist"]
+A: Contact our sales team for pricing information tailored to your organization's needs. We offer flexible plans for both public use with limits and corporate deployment with whitelist access.
 
 **Q: What if the bot chooses the wrong scenario?**  
 A: Users can manually select from all 9 scenarios using inline buttons. The deterministic router provides confidence scores and asks clarifying questions when uncertain.
@@ -375,9 +375,9 @@ A: Currently, the bot operates in Telegram with DaData integration. Future versi
 | 1 | 🧱 Legal Document Structuring | Organize and format legal documents | MD/DOCX | ≤20 sec |
 | 2 | 🔍 Dispute Preparation | Prepare for litigation/arbitration | XLSX | ≤120 sec |
 | 3 | ✍️ Legal Opinion Generation | Expert legal analysis | DOCX | ≤20 sec |
-| 4 | ⚖️ Client-Friendly Explanations | Simplify complex legal matters | MSG/DOCX | ≤20 sec |
+| 4 | ⚖️ Client-Friendly Explanations | Simplify complex legal matters | TEXT/DOCX | ≤20 sec |
 | 5 | 📬 Claim Response Drafting | Respond to legal claims | DOCX | ≤20 sec |
-| 6 | 📋 Business Correspondence Context | Review business communications | MSG/MD | ≤20 sec |
+| 6 | 📋 Business Correspondence Context | Review business communications | TEXT/MD | ≤20 sec |
 | 7 | 🧩 Contract Agent (RF) | Analyze/draft RF contracts | DOCX/XLSX | ≤120 sec |
 | 8 | 📑 Risk Table Generation | Comprehensive risk assessment | XLSX | ≤120 sec |
 | 9 | 📊 Case Law Analytics | Judicial precedent research | XLSX | ≤20 sec |
