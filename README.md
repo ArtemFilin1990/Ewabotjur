@@ -142,6 +142,7 @@ Review all three documents:
 
 - Python 3.9 or higher
 - pip (Python package installer)
+- Node.js 18 or higher and npm (for MCP servers)
 
 #### Installation
 
@@ -151,10 +152,48 @@ git clone https://github.com/ArtemFilin1990/Ewabotjur.git
 cd Ewabotjur
 ```
 
-2. Install dependencies:
+2. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+3. Install Node.js dependencies (for MCP servers):
+```bash
+npm install
+```
+
+4. Build MCP servers:
+```bash
+npm run build
+```
+
+#### Setting Up MCP DaData Integration
+
+The project includes a Model Context Protocol (MCP) server for DaData integration, which allows AI assistants like Claude to access DaData API for company verification and address standardization.
+
+1. Create a `.env` file with your DaData credentials:
+```env
+DADATA_API_KEY=your_dadata_api_key_here
+DADATA_SECRET_KEY=your_dadata_secret_key_here
+```
+
+2. Configure Claude Desktop (if using) by adding to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "dadata": {
+      "command": "node",
+      "args": ["/absolute/path/to/Ewabotjur/dist/mcp-servers/dadata-server.js"],
+      "env": {
+        "DADATA_API_KEY": "your_api_key",
+        "DADATA_SECRET_KEY": "your_secret_key"
+      }
+    }
+  }
+}
+```
+
+See `src/mcp-servers/README.md` for detailed MCP server documentation.
 
 #### Running the Protocol Template Generator
 

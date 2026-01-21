@@ -1,0 +1,28 @@
+{
+  "name": "ewabotjur-mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP servers for Ewabotjur Telegram Bot - DaData integration and other services",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "node --test"
+  },
+  "keywords": [
+    "mcp",
+    "dadata",
+    "legal-tech",
+    "telegram-bot"
+  ],
+  "author": "Artem Filin",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3"
+  }
+}

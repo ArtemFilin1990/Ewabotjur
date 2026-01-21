@@ -108,6 +108,56 @@ read: AGENTS.md
 **Можно ли обновить его позже?**
 Безусловно. Относитесь к AGENTS.md как к живой документации.
 
+## Как настроить MCP сервер DaData?
+
+Проект включает MCP (Model Context Protocol) сервер для интеграции с DaData API.
+
+### Установка и настройка
+
+1. Установите зависимости:
+```bash
+npm install
+```
+
+2. Скомпилируйте TypeScript:
+```bash
+npm run build
+```
+
+3. Настройте переменные окружения в `.env`:
+```env
+DADATA_API_KEY=your_dadata_api_key_here
+DADATA_SECRET_KEY=your_dadata_secret_key_here
+```
+
+### Использование с Claude Desktop
+
+Добавьте в `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "dadata": {
+      "command": "node",
+      "args": ["/absolute/path/to/Ewabotjur/dist/mcp-servers/dadata-server.js"],
+      "env": {
+        "DADATA_API_KEY": "your_key",
+        "DADATA_SECRET_KEY": "your_secret"
+      }
+    }
+  }
+}
+```
+
+### Доступные инструменты MCP
+
+- `dadata_suggest_company` - поиск компаний по названию, ИНН или ОГРН
+- `dadata_find_by_id` - поиск по точному ИНН/ОГРН
+- `dadata_suggest_address` - подсказка и стандартизация адресов
+- `dadata_clean_address` - очистка адреса
+
+Подробнее см. `src/mcp-servers/README.md`
+
 # User-provided custom instructions
 
 Общие настройки Codex
