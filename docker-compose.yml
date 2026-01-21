@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Telegram бот
+  bot:
+    build: .
+    container_name: ewabotjur_bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - DADATA_TOKEN=${DADATA_TOKEN}
+      - DB_URL=mongodb://mongodb:27017/ewabotjur
+      - STORAGE_PATH=/app/storage
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4}
+      - SESSION_TTL_MINUTES=${SESSION_TTL_MINUTES:-60}
+      - ENABLE_METRICS=${ENABLE_METRICS:-true}
+      - METRICS_PORT=9090
+    volumes:
+      - ./storage:/app/storage
+      - ./logs:/app/logs
+    depends_on:
+      - mongodb
+    networks:
+      - ewabotjur_network
+    ports:
+      - "9090:9090"  # Порт для метрик Prometheus
+
+  # MongoDB база данных
+  mongodb:
+    image: mongo:7.0
+    container_name: ewabotjur_mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=ewabotjur
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - ewabotjur_network
+    ports:
+      - "27017:27017"
+
+  # Prometheus для метрик (опционально)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ewabotjur_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ewabotjur_network
+    ports:
+      - "9091:9090"
+    profiles:
+      - monitoring
+
+  # Grafana для визуализации метрик (опционально)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ewabotjur_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - ewabotjur_network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  ewabotjur_network:
+    driver: bridge

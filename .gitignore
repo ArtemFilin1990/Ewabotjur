@@ -54,3 +54,15 @@ node_modules/
 # Temporary files
 /tmp/
 *.tmp
+
+# Storage directory
+storage/
+
+# Logs
+logs/
+*.log
+
+# Docker volumes
+mongodb_data/
+prometheus_data/
+grafana_data/
