@@ -257,51 +257,56 @@ bot.command("dadata", async (ctx) => {
   const query = parts[1];
   const kpp = parts[2];
 
-  const res = await mcp.callTool({
-    name: "dadata_find_party_by_inn_or_ogrn",
-    arguments: kpp ? { query, kpp } : { query },
-  });
+  try {
+    const res = await mcp.callTool({
+      name: "dadata_find_party_by_inn_or_ogrn",
+      arguments: kpp ? { query, kpp } : { query },
+    });
 
-  const structured = (res as any).structuredContent ?? {};
-  const top = pickTop(structured, 1);
-  if (!top.length) {
-    await ctx.reply("Ничего не найдено.");
-    return;
+    const structured = (res as any).structuredContent ?? {};
+    const top = pickTop(structured, 1);
+    if (!top.length) {
+      await ctx.reply("Ничего не найдено.");
+      return;
+    }
+
+    const s0 = top[0];
+    const data = s0.data as any;
+
+    const c = current(ctx.from.id);
+    c.dadata.enabled = true;
+    c.dadata.query_inn_or_ogrn = query;
+    if (kpp) c.dadata.kpp = kpp;
+    c.dadata.snapshot = structured;
+
+    const overwrite = c.dadata.use_as_source_of_truth === true;
+
+    function put(path: string, value: string | undefined) {
+      if (!value) return;
+      const cur = getByPath(c as any, path);
+      if (overwrite || cur == null || cur === "") setByPath(c as any, path, value);
+    }
+
+    put("cp.name", String(s0.value || ""));
+    put("cp.inn", String(data.inn ?? ""));
+    put("cp.ogrn", String(data.ogrn ?? ""));
+    put("cp.kpp", String(data.kpp ?? ""));
+    put("cp.legal_address", String(data.address?.value ?? ""));
+    put("cp.signer.name", String(data.management?.name ?? ""));
+    put("cp.signer.position", String(data.management?.post ?? ""));
+
+    save(ctx.from.id, c);
+
+    await ctx.reply(
+      "Ок. Контрагент заполнен из DaData:\n" +
+        `- ${fmtParty(c.cp)}\n` +
+        (c.cp.legal_address ? `- адрес: ${c.cp.legal_address}\n` : "") +
+        (c.cp.signer?.name ? `- руководитель: ${c.cp.signer.name} (${c.cp.signer.position || "—"})\n` : ""),
+    );
+  } catch (err) {
+    console.error("DaData MCP call failed:", err);
+    await ctx.reply("Произошла ошибка при обращении к DaData. Пожалуйста, попробуйте ещё раз позже.");
   }
-
-  const s0 = top[0];
-  const data = s0.data as any;
-
-  const c = current(ctx.from.id);
-  c.dadata.enabled = true;
-  c.dadata.query_inn_or_ogrn = query;
-  if (kpp) c.dadata.kpp = kpp;
-  c.dadata.snapshot = structured;
-
-  const overwrite = c.dadata.use_as_source_of_truth === true;
-
-  function put(path: string, value: string | undefined) {
-    if (!value) return;
-    const cur = getByPath(c as any, path);
-    if (overwrite || cur == null || cur === "") setByPath(c as any, path, value);
-  }
-
-  put("cp.name", String(s0.value || ""));
-  put("cp.inn", String(data.inn ?? ""));
-  put("cp.ogrn", String(data.ogrn ?? ""));
-  put("cp.kpp", String(data.kpp ?? ""));
-  put("cp.legal_address", String(data.address?.value ?? ""));
-  put("cp.signer.name", String(data.management?.name ?? ""));
-  put("cp.signer.position", String(data.management?.post ?? ""));
-
-  save(ctx.from.id, c);
-
-  await ctx.reply(
-    "Ок. Контрагент заполнен из DaData:\n" +
-      `- ${fmtParty(c.cp)}\n` +
-      (c.cp.legal_address ? `- адрес: ${c.cp.legal_address}\n` : "") +
-      (c.cp.signer?.name ? `- руководитель: ${c.cp.signer.name} (${c.cp.signer.position || "—"})\n` : ""),
-  );
 });
 
 bot.action("DADATA", async (ctx) => {
