@@ -19,13 +19,13 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-PIPL_SPEC
+PIPFILE_SPEC
 
 # Virtual Environment
 venv/
 env/
 ENV/
-.venv
+.venv/
 
 # IDEs
 .vscode/
