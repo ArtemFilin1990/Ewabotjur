@@ -4,9 +4,33 @@
 Хранение сессий, пользователей и истории запросов.
 """
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+
+
+@dataclass
+class FileMetadata:
+    """Метаданные файла в кейсе."""
+    file_id: str
+    name: str
+    size: int
+    mime_type: str
+    uploaded_at: datetime
+    extracted_text: Optional[str] = None
+    extraction_status: str = "pending"  # pending, success, failed
+    extraction_error: Optional[str] = None
+
+
+@dataclass
+class CaseContext:
+    """Контекст юридического кейса."""
+    my_company: Dict[str, Any] = field(default_factory=dict)
+    counterparty: Dict[str, Any] = field(default_factory=dict)
+    files: List[FileMetadata] = field(default_factory=list)
+    dadata_cache: Dict[str, Any] = field(default_factory=dict)
+    scenario: Optional[str] = None
+    custom_fields: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -17,7 +41,8 @@ class Session:
     created_at: datetime
     expires_at: datetime
     messages: List[Dict] = field(default_factory=list)
-    context: Dict = field(default_factory=dict)
+    context: CaseContext = field(default_factory=CaseContext)
+    status: str = "active"  # active, completed, expired
 
 
 @dataclass
