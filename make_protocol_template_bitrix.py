@@ -16,7 +16,8 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+
+from docx.text.run import Run
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -25,6 +26,7 @@ from docx.shared import Pt
 
 @dataclass(frozen=True)
 class Vars:
+    """Bitrix placeholders for the protocol template."""
     # Документ/контракт
     DOC_NUMBER: str = "{DocumentNumber}"
     DOC_DATE: str = "{DocumentCreateTime~d.m.Y}"
@@ -51,6 +53,7 @@ V = Vars()
 
 
 def build_md(rows: int) -> str:
+    """Build the Markdown template for the protocol with a fixed number of rows."""
     # Название по центру — через HTML, чтобы переносилось в DOCX/рендерилось предсказуемо
     lines = []
     lines.append('<p align="center"><b>ПРОТОКОЛ РАЗНОГЛАСИЙ</b></p>')
@@ -103,13 +106,15 @@ def build_md(rows: int) -> str:
     return "\n".join(lines)
 
 
-def _set_font_run(run, name: str = "Times New Roman", size_pt: int = 12, bold: bool = False):
+def _set_font_run(run: Run, name: str = "Times New Roman", size_pt: int = 12, bold: bool = False) -> None:
+    """Apply font settings to a DOCX run."""
     run.font.name = name
     run.font.size = Pt(size_pt)
     run.bold = bold
 
 
 def build_docx(rows: int, out_docx: Path) -> None:
+    """Build the DOCX template and write it to disk."""
     doc = Document()
 
     # Title centered
@@ -177,16 +182,21 @@ def build_docx(rows: int, out_docx: Path) -> None:
     doc.save(str(out_docx))
 
 
-def main():
+def main() -> None:
+    """CLI entrypoint for template generation."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out-docx", required=True, help="Output DOCX path")
     ap.add_argument("--out-md", required=True, help="Output MD path")
     ap.add_argument("--rows", type=int, default=10, help="Number of disagreement rows in table")
     args = ap.parse_args()
 
+    if args.rows < 1:
+        raise ValueError("--rows must be a positive integer")
+
     out_docx = Path(args.out_docx)
     out_md = Path(args.out_md)
 
+    out_md.parent.mkdir(parents=True, exist_ok=True)
     md = build_md(rows=args.rows)
     out_md.write_text(md, encoding="utf-8")
 

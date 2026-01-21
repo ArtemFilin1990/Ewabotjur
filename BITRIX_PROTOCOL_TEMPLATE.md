@@ -33,7 +33,7 @@ python make_protocol_template_bitrix.py \
 
 - `--out-docx`: Path for output DOCX file (required)
 - `--out-md`: Path for output Markdown file (required)
-- `--rows`: Number of disagreement rows in the table (default: 10)
+- `--rows`: Number of disagreement rows in the table (default: 10, must be >= 1)
 
 ## Template Variables
 
