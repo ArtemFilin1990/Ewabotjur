@@ -1,5 +1,5 @@
 # make_protocol_template_bitrix.py
-# Generates Bitrix24 legal document templates for protocol of disagreements.
+# pip install python-docx
 #
 # Usage:
 #   python make_protocol_template_bitrix.py \
@@ -11,10 +11,12 @@
 # - Все UF_CRM__TBD__* затем заменяете на реальные {UF_CRM_XXXXXXXXXXXX} из Bitrix (⚙ Fields).
 # - Requisite/BankDetail/MyCompany переменные оставлены как стандартные Bitrix-плейсхолдеры.
 
+from __future__ import annotations
+
 import argparse
-import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -49,14 +51,6 @@ V = Vars()
 
 
 def build_md(rows: int) -> str:
-    """Generate Markdown template for protocol of disagreements.
-    
-    Args:
-        rows: Number of disagreement rows in the table (must be positive)
-        
-    Returns:
-        Markdown-formatted template as a string
-    """
     # Название по центру — через HTML, чтобы переносилось в DOCX/рендерилось предсказуемо
     lines = []
     lines.append('<p align="center"><b>ПРОТОКОЛ РАЗНОГЛАСИЙ</b></p>')
@@ -109,30 +103,13 @@ def build_md(rows: int) -> str:
     return "\n".join(lines)
 
 
-def _set_font_run(run, font_name: str = "Times New Roman", size_pt: int = 12, bold: bool = False) -> None:
-    """Set font properties for a document run.
-    
-    Args:
-        run: The document run to modify
-        font_name: Font family name (default: Times New Roman)
-        size_pt: Font size in points (default: 12)
-        bold: Whether to make the text bold (default: False)
-    """
-    run.font.name = font_name
+def _set_font_run(run, name: str = "Times New Roman", size_pt: int = 12, bold: bool = False):
+    run.font.name = name
     run.font.size = Pt(size_pt)
     run.bold = bold
 
 
 def build_docx(rows: int, out_docx: Path) -> None:
-    """Generate DOCX template for protocol of disagreements.
-    
-    Args:
-        rows: Number of disagreement rows in the table (must be positive)
-        out_docx: Path where the DOCX file will be saved
-        
-    Raises:
-        OSError: If the file cannot be created or written
-    """
     doc = Document()
 
     # Title centered
@@ -196,85 +173,26 @@ def build_docx(rows: int, out_docx: Path) -> None:
     doc.add_paragraph("Служебное примечание:")
     doc.add_paragraph("— Все переменные вида {UF_CRM__TBD__...} заменить на реальные коды {UF_CRM_XXXXXXXXXXXX} из списка полей (⚙ Fields) в вашем портале Bitrix24.")
 
-    try:
-        out_docx.parent.mkdir(parents=True, exist_ok=True)
-        doc.save(str(out_docx))
-    except OSError as e:
-        print(f"ERROR: Failed to write DOCX file: {e}", file=sys.stderr)
-        raise
-
-
-def _validate_output_path(path: Path, file_type: str) -> None:
-    """Validate output path for security and correctness.
-    
-    Args:
-        path: Path to validate
-        file_type: Type of file (for error messages)
-        
-    Raises:
-        ValueError: If path contains potential directory traversal or is invalid
-    """
-    # Check for directory traversal attempts
-    try:
-        resolved = path.resolve()
-        # Check for suspicious path patterns
-        if ".." in str(path):
-            print(f"WARNING: Path contains '..' - {path}", file=sys.stderr)
-        
-        # Additional validation: ensure resolved path is reasonable
-        # This helps catch encoded or obfuscated traversal attempts
-        path_str = str(resolved)
-        if any(suspicious in path_str for suspicious in ["/..", "\\.."]):
-            raise ValueError(f"Invalid {file_type} path: potential directory traversal detected")
-    except (ValueError, RuntimeError) as e:
-        raise ValueError(f"Invalid {file_type} path: {e}") from e
+    out_docx.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(out_docx))
 
 
 def main():
-    """Main entry point for the template generator."""
-    ap = argparse.ArgumentParser(
-        description="Generate Bitrix24 legal document templates for protocol of disagreements"
-    )
+    ap = argparse.ArgumentParser()
     ap.add_argument("--out-docx", required=True, help="Output DOCX path")
     ap.add_argument("--out-md", required=True, help="Output MD path")
-    ap.add_argument(
-        "--rows", 
-        type=int, 
-        default=10, 
-        help="Number of disagreement rows in table (must be positive, recommended: 5-20)"
-    )
+    ap.add_argument("--rows", type=int, default=10, help="Number of disagreement rows in table")
     args = ap.parse_args()
-
-    # Validate rows input
-    if args.rows <= 0:
-        print(f"ERROR: --rows must be a positive integer, got: {args.rows}", file=sys.stderr)
-        sys.exit(1)
-    
-    if args.rows > 100:
-        print(f"WARNING: --rows={args.rows} is very large, may cause performance issues", file=sys.stderr)
 
     out_docx = Path(args.out_docx)
     out_md = Path(args.out_md)
-    
-    # Validate paths
-    _validate_output_path(out_docx, "DOCX")
-    _validate_output_path(out_md, "MD")
 
-    try:
-        # Generate Markdown
-        md = build_md(rows=args.rows)
-        out_md.write_text(md, encoding="utf-8")
-        
-        # Generate DOCX
-        build_docx(rows=args.rows, out_docx=out_docx)
-        
-        print(f"SUCCESS: Generated templates\n- DOCX: {out_docx}\n- MD: {out_md}\n- Rows: {args.rows}")
-    except OSError as e:
-        print(f"ERROR: Failed to write output files: {e}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"ERROR: Unexpected error: {e}", file=sys.stderr)
-        sys.exit(1)
+    md = build_md(rows=args.rows)
+    out_md.write_text(md, encoding="utf-8")
+
+    build_docx(rows=args.rows, out_docx=out_docx)
+
+    print(f"OK: wrote\n- {out_docx}\n- {out_md}\nRows: {args.rows}")
 
 
 if __name__ == "__main__":
