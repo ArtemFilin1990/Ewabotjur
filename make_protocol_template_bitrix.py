@@ -198,7 +198,7 @@ def build_docx(rows: int, out_docx: Path) -> None:
 
     try:
         out_docx.parent.mkdir(parents=True, exist_ok=True)
-        doc.save(out_docx)
+        doc.save(str(out_docx))
     except OSError as e:
         print(f"ERROR: Failed to write DOCX file: {e}", file=sys.stderr)
         raise
@@ -217,10 +217,15 @@ def _validate_output_path(path: Path, file_type: str) -> None:
     # Check for directory traversal attempts
     try:
         resolved = path.resolve()
-        # Ensure the path doesn't escape the current working directory tree
-        # (allow any valid path but prevent obvious traversal patterns)
+        # Check for suspicious path patterns
         if ".." in str(path):
             print(f"WARNING: Path contains '..' - {path}", file=sys.stderr)
+        
+        # Additional validation: ensure resolved path is reasonable
+        # This helps catch encoded or obfuscated traversal attempts
+        path_str = str(resolved)
+        if any(suspicious in path_str for suspicious in ["/..", "\\.."]):
+            raise ValueError(f"Invalid {file_type} path: potential directory traversal detected")
     except (ValueError, RuntimeError) as e:
         raise ValueError(f"Invalid {file_type} path: {e}") from e
 

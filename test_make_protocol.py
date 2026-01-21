@@ -1,6 +1,5 @@
 """Basic smoke tests for make_protocol_template_bitrix.py"""
 
-import os
 import tempfile
 import unittest
 from pathlib import Path
