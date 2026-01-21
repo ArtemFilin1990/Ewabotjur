@@ -36,7 +36,17 @@ npm run build
 cd ../tg-bot
 npm install
 npm start
-```
+- /export_json
+
+## Legacy documentation
+
+This README is a minimal quick-start guide for the Ewabotjur TG + MCP DaData starter.
+A previous version of the README contained a more comprehensive SRS, issue pack,
+and promotional content. That earlier documentation was intentionally replaced
+for this starter setup and remains available in the project’s git history.
+
+To view the legacy documentation, check out an earlier commit or browse the
+repository history in your git hosting UI and open the previous `README.md`.
 
 ## Bot commands
 - /new
