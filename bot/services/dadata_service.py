@@ -8,7 +8,6 @@ import logging
 import aiohttp
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 

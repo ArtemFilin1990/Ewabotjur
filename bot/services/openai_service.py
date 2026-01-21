@@ -280,7 +280,16 @@ class OpenAIService:
             )
             
             # Парсим JSON ответ
-            result = json.loads(response)
+            try:
+                result = json.loads(response)
+            except json.JSONDecodeError as json_err:
+                logger.error(f"Ошибка парсинга JSON ответа от OpenAI: {json_err}")
+                logger.debug(f"Полученный ответ: {response}")
+                return {
+                    "scenario": None,
+                    "confidence": 0.0,
+                    "reasoning": "Ошибка парсинга ответа от AI"
+                }
             
             return result
             

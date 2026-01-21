@@ -7,6 +7,7 @@ import os
 import logging
 import asyncio
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -19,6 +20,9 @@ from telegram.ext import (
 
 from bot.services.dadata_service import DaDataService
 from bot.services.openai_service import OpenAIService
+
+# Загрузка переменных окружения из .env файла
+load_dotenv()
 
 # Настройка логирования
 logging.basicConfig(
