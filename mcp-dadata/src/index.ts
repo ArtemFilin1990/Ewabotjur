@@ -113,8 +113,10 @@ server.registerTool(
 );
 
 // Validate API key at startup
+// DaData API keys are typically 40 characters long
+const MIN_API_KEY_LENGTH = 20;
 const apiKey = requireEnv("DADATA_API_KEY");
-if (apiKey.length < 20) {
+if (apiKey.length < MIN_API_KEY_LENGTH) {
   console.warn("[mcp-dadata] Warning: DADATA_API_KEY seems too short. Please verify it is correct.");
 }
 

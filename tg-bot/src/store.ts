@@ -82,7 +82,7 @@ export function initStore(sqlitePath: string) {
       }
 
       const obj = parsed as Record<string, unknown>;
-      const result: UserState = {};
+      const result: UserState = { mode: "idle", wizard_step: null };
 
       if (
         obj.mode === "idle" ||
@@ -94,9 +94,7 @@ export function initStore(sqlitePath: string) {
       }
 
       if (typeof obj.wizard_step === "string" || obj.wizard_step === null || obj.wizard_step === undefined) {
-        result.wizard_step = (obj.wizard_step ?? null) as string | null;
-      } else {
-        result.wizard_step = null;
+        result.wizard_step = obj.wizard_step ?? null;
       }
 
       return result;
