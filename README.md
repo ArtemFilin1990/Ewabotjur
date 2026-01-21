@@ -136,6 +136,58 @@ Review all three documents:
 
 ## 🎯 Quick Start
 
+### For Developers
+
+#### Prerequisites
+
+- Python 3.9 or higher
+- pip (Python package installer)
+
+#### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/ArtemFilin1990/Ewabotjur.git
+cd Ewabotjur
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+#### Running the Protocol Template Generator
+
+The repository includes a utility script to generate Bitrix24 legal document templates:
+
+```bash
+python make_protocol_template_bitrix.py \
+  --out-docx protocol_template.docx \
+  --out-md protocol_template.md \
+  --rows 10
+```
+
+**Options:**
+- `--out-docx` (required): Path for output DOCX file
+- `--out-md` (required): Path for output Markdown file
+- `--rows` (optional): Number of disagreement rows in table (default: 10, must be positive)
+
+**Example:**
+```bash
+# Generate template with 5 rows
+python make_protocol_template_bitrix.py \
+  --out-docx output/protocol.docx \
+  --out-md output/protocol.md \
+  --rows 5
+```
+
+#### Running Tests
+
+```bash
+# Run smoke tests for the protocol generator
+python -m unittest test_make_protocol.py -v
+```
+
 ### Understanding the Product
 
 1. Read the **Product Overview** section in PROMOTIONAL_CONTENT.md
