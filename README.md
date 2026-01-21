@@ -1,28 +1,41 @@
-# Ewabotjur TG + MCP DaData (starter)
+# Ewabotjur TG + MCP DaData
 
 ## What it is
-- `mcp-dadata`: MCP server exposing DaData tools (findById/party, suggest/party).
-- `tg-bot`: Telegram bot that talks to DaData ONLY via MCP (stdio), stores case fields, supports upload (stores file_id), wizard, and generates markdown bundles.
+Telegram bot юрист с интеграцией DaData через MCP (Model Context Protocol).
 
-## Quick start
-### 1) MCP DaData
+**Структура проекта:**
+- `mcp-dadata`: MCP server exposing DaData tools (findById/party, suggest/party)
+- `tg-bot`: Telegram bot that talks to DaData ONLY via MCP (stdio), stores case fields, supports upload (stores file_id), wizard, and generates markdown bundles
+
+**📚 Полная документация:** См. [SRS_Telegram_Bot_Jurist.md](SRS_Telegram_Bot_Jurist.md)
+
+## Configuration
+
+### 1. MCP DaData Server
+
+1. Get your DaData API key from https://dadata.ru/
+2. Copy `mcp-dadata/.env.example` to `mcp-dadata/.env`
+3. Set `DADATA_API_KEY` in `.env`
+
+### 2. Telegram Bot
+
+1. Create a bot via @BotFather and get your token
+2. Copy `tg-bot/.env.example` to `tg-bot/.env`
+3. Set `TELEGRAM_BOT_TOKEN` in `.env`
+4. Verify `MCP_DADATA_ARGS` points to the correct path
+
+### 3. Build and Run
+
 ```bash
+# Build MCP server
 cd mcp-dadata
-npm i
-cp .env.example .env
-# set DADATA_API_KEY
+npm install
 npm run build
-npm start
-```
 
-### 2) Telegram bot
-```bash
+# Start bot (in separate terminal)
 cd ../tg-bot
-npm i
-cp .env.example .env
-# set TELEGRAM_BOT_TOKEN
-# ensure MCP_DADATA_ARGS points to ../mcp-dadata/dist/index.js
-node src/bot.ts
+npm install
+npm start
 ```
 
 ## Bot commands
