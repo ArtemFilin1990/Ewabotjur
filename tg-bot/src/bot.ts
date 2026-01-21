@@ -17,6 +17,37 @@ function env(name: string, fallback?: string): string {
   return v;
 }
 
+/**
+ * Parse command line arguments from a string, handling quoted strings.
+ * Example: 'arg1 "arg with spaces" arg3' => ['arg1', 'arg with spaces', 'arg3']
+ */
+function parseArgs(argsString: string): string[] {
+  const args: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < argsString.length; i++) {
+    const char = argsString[i];
+    
+    if (char === '"' || char === "'") {
+      inQuotes = !inQuotes;
+    } else if (char === ' ' && !inQuotes) {
+      if (current) {
+        args.push(current);
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+  
+  if (current) {
+    args.push(current);
+  }
+  
+  return args;
+}
+
 const OUT_DIR = path.resolve("./out");
 const DATA_DIR = path.resolve("./data");
 fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -25,10 +56,16 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const store = initStore(env("SQLITE_PATH", "./data/bot.sqlite"));
 store.cleanupTTL(Number(env("CASE_TTL_DAYS", "30")));
 
-const mcp = await connectDaDataMcp(
-  env("MCP_DADATA_COMMAND", "node"),
-  env("MCP_DADATA_ARGS").split(" ").filter(Boolean),
-);
+let mcp;
+try {
+  mcp = await connectDaDataMcp(
+    env("MCP_DADATA_COMMAND", "node"),
+    parseArgs(env("MCP_DADATA_ARGS")),
+  );
+} catch (error) {
+  console.error("Failed to initialize DaData MCP client. Please verify MCP_DADATA_COMMAND and MCP_DADATA_ARGS.", error);
+  throw new Error("MCP client initialization failed during bot startup. See logs for details.");
+}
 
 const bot = new Telegraf(env("TELEGRAM_BOT_TOKEN"));
 
