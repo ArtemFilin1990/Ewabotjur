@@ -74,7 +74,35 @@ export function initStore(sqlitePath: string) {
   }
 
   function loadState(row: StateRow): UserState {
-    return JSON.parse(row.state_json) as UserState;
+    try {
+      const parsed = JSON.parse(row.state_json);
+
+      if (parsed === null || typeof parsed !== "object") {
+        return { mode: "idle", wizard_step: null };
+      }
+
+      const obj = parsed as Record<string, unknown>;
+      const result: UserState = {};
+
+      if (
+        obj.mode === "idle" ||
+        obj.mode === "upload_document" ||
+        obj.mode === "upload_attachment" ||
+        obj.mode === "wizard"
+      ) {
+        result.mode = obj.mode;
+      }
+
+      if (typeof obj.wizard_step === "string" || obj.wizard_step === null || obj.wizard_step === undefined) {
+        result.wizard_step = (obj.wizard_step ?? null) as string | null;
+      } else {
+        result.wizard_step = null;
+      }
+
+      return result;
+    } catch {
+      return { mode: "idle", wizard_step: null };
+    }
   }
 
   return {
@@ -100,7 +128,8 @@ export function initStore(sqlitePath: string) {
     },
     cleanupTTL(ttlDays: number) {
       const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
-      deleteOlderThan.run(cutoff);
+      const result = deleteOlderThan.run(cutoff);
+      console.log(`[store] cleanupTTL: deleted ${result.changes} cases older than ${cutoff}`);
     },
     getState(userId: number): UserState {
       const row = getStateStmt.get(userId) as StateRow | undefined;

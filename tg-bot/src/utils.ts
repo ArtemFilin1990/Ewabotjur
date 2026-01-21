@@ -1,6 +1,16 @@
+const DANGEROUS_PATH_PATTERNS = ["__proto__", "constructor", "prototype"];
+
 export function setByPath(obj: any, path: string, value: any) {
   const parts = path.split(".").filter(Boolean);
   if (!parts.length) throw new Error("Empty path");
+  
+  // Validate path to prevent prototype pollution
+  for (const part of parts) {
+    if (DANGEROUS_PATH_PATTERNS.includes(part)) {
+      throw new Error(`Invalid path component: ${part}`);
+    }
+  }
+  
   let cur = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const k = parts[i];

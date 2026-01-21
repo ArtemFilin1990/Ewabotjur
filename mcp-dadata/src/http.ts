@@ -32,7 +32,15 @@ export async function postJson<T>(
     const text = await res.text();
     if (!res.ok) throw new HttpError(`HTTP ${res.status} for ${url}`, res.status, text);
 
-    return JSON.parse(text) as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch (e) {
+      throw new HttpError(
+        `Failed to parse JSON response from ${url}: ${e instanceof Error ? e.message : String(e)}`,
+        res.status,
+        text,
+      );
+    }
   } finally {
     clearTimeout(t);
   }

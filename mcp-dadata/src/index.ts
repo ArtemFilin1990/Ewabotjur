@@ -112,4 +112,10 @@ server.registerTool(
   }),
 );
 
+// Validate API key at startup
+const apiKey = requireEnv("DADATA_API_KEY");
+if (apiKey.length < 20) {
+  console.warn("[mcp-dadata] Warning: DADATA_API_KEY seems too short. Please verify it is correct.");
+}
+
 await server.connect(new StdioServerTransport());

@@ -102,6 +102,24 @@ function fmtParty(p: any) {
   return `${name}${inn}${ogrn}${kpp}`;
 }
 
+async function sendBundleFiles(ctx: any, c: Case) {
+  const { bundleName, files } = generateBundle(c);
+
+  const dir = path.join(OUT_DIR, bundleName);
+  fs.mkdirSync(dir, { recursive: true });
+
+  for (const f of files) {
+    fs.writeFileSync(path.join(dir, f.name), f.content, "utf-8");
+  }
+
+  for (const f of files) {
+    const full = path.join(dir, f.name);
+    await ctx.replyWithDocument({ source: full, filename: f.name });
+  }
+
+  await ctx.reply(`Готово. Пакет: ${bundleName}`);
+}
+
 async function showMenu(ctx: any) {
   const kb = Markup.inlineKeyboard([
     [Markup.button.callback("Новый кейс", "NEW_CASE")],
@@ -400,8 +418,8 @@ bot.on("text", async (ctx, next) => {
   }
 
   if (st.wizard_step === "cp_inn_or_name") {
-    // If looks like INN/OGRN => suggest using /dadata
-    if (/^\d{10,15}$/.test(msg)) {
+    // If looks like INN/OGRN (INN 10/12, OGRN 13, OGRNIP 15 digits) => suggest using /dadata
+    if (/^(\d{10}|\d{12}|\d{13}|\d{15})$/.test(msg)) {
       await ctx.reply(`Принято. Для автозаполнения выполните: /dadata ${msg}`);
       c.cp.inn = msg;
     } else {
@@ -419,40 +437,12 @@ bot.on("text", async (ctx, next) => {
 // Generate bundle
 bot.command("generate", async (ctx) => {
   const c = current(ctx.from.id);
-  const { bundleName, files } = generateBundle(c);
-
-  const dir = path.join(OUT_DIR, bundleName);
-  fs.mkdirSync(dir, { recursive: true });
-
-  for (const f of files) {
-    fs.writeFileSync(path.join(dir, f.name), f.content, "utf-8");
-  }
-
-  for (const f of files) {
-    const full = path.join(dir, f.name);
-    await ctx.replyWithDocument({ source: full, filename: f.name });
-  }
-
-  await ctx.reply(`Готово. Пакет: ${bundleName}`);
+  await sendBundleFiles(ctx, c);
 });
 
 bot.action("GENERATE", async (ctx) => {
   const c = current(ctx.from!.id);
-  const { bundleName, files } = generateBundle(c);
-
-  const dir = path.join(OUT_DIR, bundleName);
-  fs.mkdirSync(dir, { recursive: true });
-
-  for (const f of files) {
-    fs.writeFileSync(path.join(dir, f.name), f.content, "utf-8");
-  }
-
-  for (const f of files) {
-    const full = path.join(dir, f.name);
-    await ctx.replyWithDocument({ source: full, filename: f.name });
-  }
-
-  await ctx.reply(`Готово. Пакет: ${bundleName}`);
+  await sendBundleFiles(ctx, c);
   await ctx.answerCbQuery();
 });
 
