@@ -40,6 +40,23 @@ AI-powered Telegram assistant delivering professional legal documents, contract 
    - Marketing campaign templates
    - FAQ for sales and marketing teams
 
+### Implementation
+
+4. **[bot/](./bot/)** - Telegram Bot Implementation  
+   Fully integrated Telegram bot with DaData and OpenAI services
+   - `bot/main.py` - Main bot application with command handlers
+   - `bot/services/dadata_service.py` - DaData API integration service
+   - `bot/services/openai_service.py` - OpenAI GPT-4 integration service
+   - Complete implementation of legal assistant scenarios
+   - See `bot/README.md` for detailed documentation
+
+5. **[src/mcp-servers/](./src/mcp-servers/)** - MCP DaData Server  
+   Model Context Protocol server for Claude Desktop integration
+   - TypeScript implementation with 4 tools
+   - Company search and verification
+   - Address standardization and cleaning
+   - See `src/mcp-servers/README.md` for setup guide
+
 ## 🎯 Project Overview
 
 **Telegram Bot "Юрист"** is a specialized legal technology solution that automates routine legal work while maintaining professional quality. Built for legal professionals, corporate legal departments, businesses, and individuals seeking legal document assistance.
@@ -194,6 +211,45 @@ DADATA_SECRET_KEY=your_dadata_secret_key_here
 ```
 
 See `src/mcp-servers/README.md` for detailed MCP server documentation.
+
+#### Running the Telegram Bot
+
+The project includes a fully integrated Telegram bot that combines DaData and OpenAI APIs to provide legal assistance:
+
+1. Configure your environment variables in `.env`:
+```env
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# OpenAI API
+LLM_API_KEY=your_openai_api_key_here
+LLM_MODEL=gpt-4
+LLM_TIMEOUT=30000
+
+# DaData API
+DADATA_API_KEY=your_dadata_api_key_here
+DADATA_SECRET_KEY=your_dadata_secret_key_here
+```
+
+2. Run the bot:
+```bash
+python -m bot.main
+```
+
+3. Start a conversation with your bot in Telegram:
+- `/start` - Begin interaction
+- `/help` - See usage examples
+- `/prompts` - View all available legal scenarios
+- `/status` - Check bot and API status
+
+**Features:**
+- ✅ 9 canonical legal scenarios with AI routing
+- ✅ Company verification via DaData (ИНН/ОГРН lookup)
+- ✅ Document generation via OpenAI GPT-4
+- ✅ Interactive scenario selection with buttons
+- ✅ Basic company risk scoring
+
+See `bot/README.md` for detailed bot documentation.
 
 #### Running the Protocol Template Generator
 
