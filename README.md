@@ -1,15 +1,12 @@
-# Ewabotjur — Production Telegram Jurist Bot (Vercel Webhook + Render Worker)
+# Ewabotjur — Production Telegram Jurist Bot (Render Background Worker)
 
-Production-ready Telegram bot with a lightweight Vercel webhook and a Render worker that performs all heavy processing (DaData, file extraction, risk analysis, document generation).
+Production-ready Telegram bot running in polling mode on Render as a Background Worker.
 
 ## Architecture
 
 ```
-Telegram -> Vercel /api/telegram (Next.js) -> Render Worker /ingest (FastAPI)
+Telegram -> Render Background Worker (aiogram polling)
 ```
-
-- **Vercel** hosts `app/api/telegram/route.ts` and immediately ACKs updates.
-- **Render Worker** processes updates, calls DaData, extracts files, builds risk tables, and replies via Telegram Bot API.
 
 ## Commands
 
@@ -19,106 +16,64 @@ Telegram -> Vercel /api/telegram (Next.js) -> Render Worker /ingest (FastAPI)
 | `/help` | Commands list |
 | `/ping` | `pong` response |
 | `/company_check <ИНН>` | DaData company card + base risk score |
-| `/risks` | Risk table for contract text (use reply, inline text, or file) |
+| `/risks` | Risk table for pasted text or last uploaded document |
 | `/clear_memory` | Clear chat memory |
-| `/new_task` | Reset task context |
+| `/new_task` | Reset task context (keep prefs) |
 
-`/risks` supports `file` flag to return a DOCX file: `/risks file`.
+## Access Control
 
-## Environment Variables
+All commands are gated by `ALLOWED_CHAT_IDS`. If the variable is empty, access is denied for all chats (safe default).
 
-### Vercel (Webhook Forwarder)
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `RENDER_WORKER_URL` | ✅ | Base URL of Render worker (e.g., `https://worker.onrender.com`) |
-| `WORKER_AUTH_TOKEN` | ✅ | Shared secret for worker auth |
-| `TELEGRAM_WEBHOOK_SECRET` | Optional | Secret header to validate incoming webhook |
-
-### Render (Worker)
+## Environment Variables (Render)
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `TELEGRAM_BOT_TOKEN` | ✅ | Telegram bot token |
+| `BOT_TOKEN` | ✅ | Telegram bot token |
 | `ALLOWED_CHAT_IDS` | ✅ | Comma-separated Telegram chat IDs |
-| `WORKER_AUTH_TOKEN` | ✅ | Must match Vercel token |
 | `DADATA_TOKEN` | ✅ | DaData API token |
 | `DADATA_SECRET` | Optional | DaData secret key |
 | `LOG_LEVEL` | Optional | Default `INFO` |
 | `HTTP_TIMEOUT_SECONDS` | Optional | Default `15` |
 | `MAX_FILE_SIZE_MB` | Optional | Default `15` |
-| `MEMORY_STORE_PATH` | Optional | Default `./storage/memory.json` |
+| `MEMORY_DB_PATH` | Optional | Default `./data/memory.sqlite3` |
 
-## Telegram Webhook Setup
+## Render Deployment (Manual Steps)
 
-Replace `<BOT_TOKEN>` and `<VERCEL_URL>` with your values.
+1. Create a new **Background Worker** on Render.
+2. Runtime: **Python**.
+3. Build command: `pip install -r requirements.txt`.
+4. Start command: `python -m app.main`.
+5. Add the environment variables listed above.
 
-```bash
-curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
-  -d "url=https://<VERCEL_URL>/api/telegram"
-```
+### How to get `ALLOWED_CHAT_IDS`
 
-To include a secret header, use the `secret_token` parameter and set the same value as `TELEGRAM_WEBHOOK_SECRET`:
-
-```bash
-curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
-  -d "url=https://<VERCEL_URL>/api/telegram" \
-  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
-```
-
-Check webhook status:
+1. Send a message to your bot.
+2. Call `getUpdates` and read `message.chat.id`:
 
 ```bash
-curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
+curl "https://api.telegram.org/bot<BOT_TOKEN>/getUpdates"
 ```
 
 ## Local Development
-
-### Render Worker (FastAPI)
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-export TELEGRAM_BOT_TOKEN=...
+export BOT_TOKEN=...
 export ALLOWED_CHAT_IDS=...
-export WORKER_AUTH_TOKEN=...
 export DADATA_TOKEN=...
-python -m src.main
+python -m app.main
 ```
-
-### Vercel Webhook (Next.js)
-
-```bash
-pnpm install
-pnpm dev
-```
-
-## Render Deployment (Manual Steps)
-
-1. Create a new **Web Service** on Render from this repo.
-2. Runtime: **Python**.
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `python -m src.main`
-5. Add environment variables listed in **Render** section above.
-
-You can also use `render.yaml` for a baseline service definition.
-
-## Vercel Deployment (Manual Steps)
-
-1. Import the repo to Vercel.
-2. Framework preset: **Next.js**.
-3. Set environment variables listed in **Vercel** section above.
-4. Deploy and use the Vercel URL in `setWebhook`.
 
 ## ASSUMPTIONS
 
-1. **Webhook secret header**: Vercel validates `X-TG-SECRET` (custom) or Telegram's `X-Telegram-Bot-Api-Secret-Token` when `TELEGRAM_WEBHOOK_SECRET` is set.
-2. **DaData response**: Optional flags `mass_address` and `mass_director` are used only if present in DaData response; scoring ignores them otherwise.
-3. **File size limit**: Default is 15 MB, override with `MAX_FILE_SIZE_MB`.
+1. **DaData field mapping**: `name.full_with_opf`, `address.unrestricted_value`, `management.name`, and `state.status` are available in the response payload. If not, `TBD` values are shown.
+2. **DaData flags**: `mass_address` and `mass_director` fields are used only when present.
+3. **File size limit**: default is 15 MB; override with `MAX_FILE_SIZE_MB`.
 
 ## Known Limitations / Next Improvements
 
-- OCR for images is scaffolded but not enabled.
-- Risk analysis is deterministic; add LLM enrichment if needed.
-- Memory is JSON-file based; SQLite can be added for scale.
+- OCR for images is not enabled (scaffold only).
+- Risk analysis is deterministic and template-driven.
+- Consider adding async job queue for heavy analysis.
