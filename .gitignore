@@ -57,6 +57,7 @@ node_modules/
 
 # Storage directory
 storage/
+data/
 
 # Logs
 logs/

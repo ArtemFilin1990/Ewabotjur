@@ -15,6 +15,25 @@ class TelegramUser(BaseModel):
     last_name: Optional[str] = None
 
 
+class TelegramChat(BaseModel):
+    """Telegram chat payload."""
+
+    id: int = Field(..., ge=1)
+    type: str
+    title: Optional[str] = None
+    username: Optional[str] = None
+
+
+class TelegramDocument(BaseModel):
+    """Telegram document payload."""
+
+    file_id: str
+    file_unique_id: str
+    file_name: Optional[str] = None
+    mime_type: Optional[str] = None
+    file_size: Optional[int] = Field(default=None, ge=0)
+
+
 class TelegramMessage(BaseModel):
     """Telegram message payload."""
 
@@ -25,6 +44,10 @@ class TelegramMessage(BaseModel):
     text: Optional[str] = None
     from_user: Optional[TelegramUser] = Field(default=None, alias="from")
     sender_chat: Optional[dict] = None
+    chat: Optional[TelegramChat] = None
+    document: Optional[TelegramDocument] = None
+    caption: Optional[str] = None
+    reply_to_message: Optional["TelegramMessage"] = None
 
 
 class TelegramCallbackQuery(BaseModel):
@@ -45,3 +68,6 @@ class TelegramUpdate(BaseModel):
     message: Optional[TelegramMessage] = None
     edited_message: Optional[TelegramMessage] = None
     callback_query: Optional[TelegramCallbackQuery] = None
+
+
+TelegramMessage.model_rebuild()

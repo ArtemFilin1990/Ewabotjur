@@ -2,6 +2,73 @@
 
 Телеграм-бот юриста с интеллектуальной маршрутизацией, обработкой документов и генерацией профессиональных артефактов.
 
+## Архитектура (Vercel + Render)
+
+- **Vercel** принимает Telegram webhook на `/api/telegram` и всегда отвечает `200 OK` (без тяжёлой логики).
+- **Render** запускает долгоживущий worker (FastAPI), который обрабатывает команды, файлы, DaData и отправляет ответы пользователям.
+- Вебхук на Vercel пересылает исходный update JSON в Render worker: `POST ${RENDER_WORKER_URL}/ingest` с `Authorization: Bearer ${WORKER_AUTH_TOKEN}`.
+
+## Быстрый старт (локально)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export TELEGRAM_BOT_TOKEN=...
+export WORKER_AUTH_TOKEN=...
+uvicorn src.app:app --host 0.0.0.0 --port 8000
+```
+
+## Переменные окружения
+
+### Render (worker)
+
+- `TELEGRAM_BOT_TOKEN` — токен Telegram Bot API.
+- `WORKER_AUTH_TOKEN` — общий секрет между Vercel и Render.
+- `ALLOWED_CHAT_IDS` — список ID через запятую (пусто = публичный режим).
+- `DADATA_TOKEN` — токен DaData.
+- `DADATA_SECRET` — секрет DaData (опционально).
+- `HTTP_TIMEOUT_SECONDS` — таймаут внешних вызовов.
+- `MAX_FILE_SIZE_MB` — лимит размера файлов (по умолчанию 15).
+- `MEMORY_STORE_PATH` — путь к JSON-хранилищу памяти.
+- `LOG_LEVEL`, `APP_NAME`, `APP_ENV`, `TELEGRAM_API_BASE`, `ENABLE_OCR`.
+
+### Vercel (webhook)
+
+- `RENDER_WORKER_URL` — URL сервиса Render (например, `https://jurist-worker.onrender.com`).
+- `WORKER_AUTH_TOKEN` — тот же секрет, что и на Render.
+- `TELEGRAM_WEBHOOK_SECRET` — опциональный секрет для заголовка `X-TG-SECRET`.
+
+## Настройка webhook
+
+```bash
+curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://<vercel-domain>/api/telegram","secret_token":"<X-TG-SECRET>"}'
+
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+```
+
+## Развёртывание
+
+### Render
+
+1. Создайте новый Web Service.
+2. Укажите `Build Command`: `pip install -r requirements.txt`.
+3. Укажите `Start Command`: `uvicorn src.app:app --host 0.0.0.0 --port $PORT`.
+4. Добавьте переменные окружения из раздела Render.
+
+### Vercel
+
+1. Импортируйте репозиторий как Next.js проект.
+2. Добавьте переменные окружения из раздела Vercel.
+3. Убедитесь, что маршрут `/api/telegram` доступен.
+
+## ASSUMPTIONS
+
+- Worker реализован на Python (FastAPI), так как базовый код в репозитории уже использует Python.
+- Для признаков «массового адреса/руководителя» используются поля `is_mass` из DaData, если они есть в ответе.
+
 ## 🎯 Реализованные функции
 
 ### ✅ Модуль 1: Безопасность (Security Layer)

@@ -1,4 +1,4 @@
-"""FastAPI application setup."""
+"""FastAPI application setup for Render worker."""
 
 from __future__ import annotations
 
@@ -7,11 +7,19 @@ from uuid import uuid4
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 
 from src.bot.schemas import TelegramUpdate
-from src.bot.webhook import handle_update
+from src.clients.telegram_client import TelegramClient
 from src.config import AppConfig, load_config
+from src.files.index import FileProcessor
+from src.handlers.telegram_handler import HandlerDependencies, process_update
 from src.logging_config import configure_logging, get_logger
+from src.security.access_control import AccessController
+from src.services.dadata_service import DaDataService
+from src.services.risk_service import RiskAnalysisService
+from src.services.scoring_service import RiskScoringService
+from src.storage.memory_store import JsonMemoryStore
 
 
 config = load_config()
@@ -19,6 +27,30 @@ configure_logging(config.log_level)
 logger = get_logger(__name__)
 
 app = FastAPI(title=config.app_name)
+telegram_client = TelegramClient(
+    token=config.telegram_bot_token,
+    base_url=config.telegram_api_base,
+    timeout_seconds=config.http_timeout_seconds,
+)
+dadata_service = DaDataService(
+    token=config.dadata_token,
+    secret=config.dadata_secret,
+    timeout=config.http_timeout_seconds,
+)
+memory_store = JsonMemoryStore(config.memory_store_path)
+dependencies = HandlerDependencies(
+    config=config,
+    logger=logger,
+    telegram=telegram_client,
+    dadata=dadata_service,
+    scoring=RiskScoringService(),
+    risk_analysis=RiskAnalysisService(),
+    memory_store=memory_store,
+    file_processor=FileProcessor(enable_ocr=config.enable_ocr),
+    access_controller=AccessController(
+        ",".join([str(item) for item in config.allowed_chat_ids])
+    ),
+)
 
 
 def _get_request_id(request: Request) -> str:
@@ -71,14 +103,32 @@ async def health_check():
     }
 
 
-@app.post("/telegram/webhook")
-async def telegram_webhook(
-    update: TelegramUpdate,
+@app.post("/ingest")
+async def ingest_update(
     request: Request,
     _: None = Depends(_enforce_body_size),
 ):
-    """Telegram webhook endpoint."""
+    """Render worker ingestion endpoint."""
 
     request_id = request.state.request_id
-    result = handle_update(update, config, logger, request_id)
-    return JSONResponse(status_code=result.status_code, content=result.payload)
+    auth_header = request.headers.get("authorization")
+    expected = f"Bearer {config.worker_auth_token}"
+    if auth_header != expected:
+        logger.warning(
+            "worker auth failed",
+            extra={"request_id": request_id, "status_code": 401},
+        )
+        return JSONResponse(status_code=401, content={"status": "unauthorized"})
+
+    try:
+        payload = await request.json()
+        update = TelegramUpdate.model_validate(payload)
+    except (ValidationError, ValueError) as exc:
+        logger.warning(
+            "invalid telegram update payload",
+            extra={"request_id": request_id, "status_code": 400},
+        )
+        return JSONResponse(status_code=400, content={"status": "invalid_payload"})
+
+    await process_update(update, dependencies, request_id)
+    return JSONResponse(status_code=200, content={"status": "ok"})

@@ -18,7 +18,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for key in ("request_id", "telegram_user_id", "endpoint", "status_code"):
+        for key in ("request_id", "telegram_user_id", "chat_id", "command", "endpoint", "status_code"):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
         if record.exc_info:
