@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from src.bot.schemas import TelegramUpdate
-from src.bot.webhook import handle_update
+from src.handlers.telegram_handler import process_update
 from src.config import AppConfig, load_config
 from src.logging_config import configure_logging, get_logger
 
@@ -71,14 +71,31 @@ async def health_check():
     }
 
 
-@app.post("/telegram/webhook")
-async def telegram_webhook(
+@app.post("/ingest")
+async def telegram_ingest(
     update: TelegramUpdate,
     request: Request,
     _: None = Depends(_enforce_body_size),
 ):
-    """Telegram webhook endpoint."""
+    """Render worker ingestion endpoint."""
 
     request_id = request.state.request_id
-    result = handle_update(update, config, logger, request_id)
-    return JSONResponse(status_code=result.status_code, content=result.payload)
+    _enforce_worker_auth(request, config)
+    try:
+        await process_update(update, config, logger, request_id)
+    except Exception:
+        logger.exception(
+            "telegram update processing failed",
+            extra={"request_id": request_id, "status_code": 500},
+        )
+    return JSONResponse(
+        status_code=200, content={"status": "accepted", "request_id": request_id}
+    )
+
+
+def _enforce_worker_auth(request: Request, config: AppConfig) -> None:
+    auth_header = request.headers.get("authorization", "")
+    if not config.worker_auth_token:
+        raise HTTPException(status_code=500, detail="Worker auth token is not set")
+    if auth_header != f"Bearer {config.worker_auth_token}":
+        raise HTTPException(status_code=401, detail="Unauthorized")

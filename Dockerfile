@@ -27,14 +27,14 @@ RUN mkdir -p /app/storage
 
 # Переменные окружения
 ENV PYTHONUNBUFFERED=1
-ENV TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+ENV TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
 ENV DADATA_TOKEN=${DADATA_TOKEN}
-ENV DB_URL=${DB_URL}
-ENV STORAGE_PATH=${STORAGE_PATH}
-ENV LLM_API_KEY=${LLM_API_KEY}
+ENV ALLOWED_CHAT_IDS=${ALLOWED_CHAT_IDS}
+ENV WORKER_AUTH_TOKEN=${WORKER_AUTH_TOKEN}
+ENV MEMORY_STORE_PATH=${MEMORY_STORE_PATH}
 
-# Открытие порта для метрик (опционально)
-EXPOSE 9090
+# Открытие порта API
+EXPOSE 8000
 
-# Команда запуска бота
-CMD ["python", "-m", "src.bot"]
+# Команда запуска воркера
+CMD ["python", "-m", "src.main"]
