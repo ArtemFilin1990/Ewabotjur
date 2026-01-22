@@ -36,5 +36,5 @@ ENV LLM_API_KEY=${LLM_API_KEY}
 # Открытие порта для метрик (опционально)
 EXPOSE 9090
 
-# Команда запуска бота
-CMD ["python", "-m", "src.bot"]
+# Команда запуска воркера
+CMD ["python", "-m", "src.worker_main"]

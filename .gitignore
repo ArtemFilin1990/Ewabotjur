@@ -57,6 +57,8 @@ node_modules/
 
 # Storage directory
 storage/
+!src/storage/
+!src/storage/**
 
 # Logs
 logs/
