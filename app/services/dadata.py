@@ -4,6 +4,13 @@ from app.config import DADATA_TOKEN, DADATA_SECRET
 DADATA_URL = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party"
 
 async def dadata_find_by_inn(inn: str) -> dict | None:
+    """
+    Поиск компании по ИНН через DaData API.
+    
+    NOTE: Использует синхронный requests.post() для простоты начального MVP.
+    В будущем заменить на async HTTP клиент (httpx или aiohttp) для избежания
+    блокировки event loop.
+    """
     if not DADATA_TOKEN:
         return None
 
