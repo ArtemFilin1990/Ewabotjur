@@ -1,1 +1,14 @@
+# Document processing
 python-docx
+PyMuPDF  # For PDF text extraction (fitz)
+
+# Document generation
+docxtpl  # For DOCX template generation
+openpyxl  # For XLSX generation
+pandas  # For data manipulation and Excel export
+
+# Template engine
+jinja2  # For prompt templates
+
+# Async HTTP client for integrations
+aiohttp  # For DaData and other API calls
