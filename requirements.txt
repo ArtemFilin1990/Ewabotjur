@@ -1,3 +1,7 @@
+# Telegram Bot
+aiogram>=3.0.0
+python-dotenv
+
 # Document processing
 python-docx
 PyMuPDF  # For PDF text extraction (fitz)
@@ -10,5 +14,6 @@ pandas  # For data manipulation and Excel export
 # Template engine
 jinja2  # For prompt templates
 
-# Async HTTP client for integrations
+# HTTP client for integrations
+requests  # Synchronous HTTP client (to be replaced with httpx)
 aiohttp  # For DaData and other API calls
