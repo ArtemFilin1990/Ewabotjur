@@ -38,7 +38,7 @@ def handle_update(
 
     user_id = _extract_user_id(update)
     if config.enforce_telegram_whitelist:
-        if user_id is None or user_id not in config.allowed_telegram_ids:
+        if user_id is None or user_id not in config.allowed_chat_ids:
             logger.warning(
                 "telegram webhook rejected by whitelist",
                 extra={

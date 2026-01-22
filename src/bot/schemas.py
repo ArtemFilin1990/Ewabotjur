@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -25,6 +25,35 @@ class TelegramMessage(BaseModel):
     text: Optional[str] = None
     from_user: Optional[TelegramUser] = Field(default=None, alias="from")
     sender_chat: Optional[dict] = None
+    chat: Optional["TelegramChat"] = None
+    document: Optional["TelegramDocument"] = None
+    photo: Optional[List["TelegramPhoto"]] = None
+    reply_to_message: Optional["TelegramMessage"] = None
+
+
+class TelegramChat(BaseModel):
+    """Telegram chat payload."""
+
+    id: int = Field(..., ge=1)
+    type: str
+
+
+class TelegramDocument(BaseModel):
+    """Telegram document payload."""
+
+    file_id: str
+    file_name: Optional[str] = None
+    mime_type: Optional[str] = None
+    file_size: Optional[int] = None
+
+
+class TelegramPhoto(BaseModel):
+    """Telegram photo payload."""
+
+    file_id: str
+    file_size: Optional[int] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
 
 
 class TelegramCallbackQuery(BaseModel):
@@ -45,3 +74,6 @@ class TelegramUpdate(BaseModel):
     message: Optional[TelegramMessage] = None
     edited_message: Optional[TelegramMessage] = None
     callback_query: Optional[TelegramCallbackQuery] = None
+
+
+TelegramMessage.model_rebuild()
