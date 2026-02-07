@@ -34,7 +34,10 @@ class OpenAIClient:
             with open(prompt_path, "r", encoding="utf-8") as f:
                 return f.read()
         except FileNotFoundError:
-            logger.warning(f"Prompt file not found: {prompt_path}, using default")
+            logger.warning(
+                "Prompt file not found, using default",
+                extra={"operation": "openai.prompt", "result": "fallback", "path": prompt_path},
+            )
             return self._get_default_prompt()
     
     def _get_default_prompt(self) -> str:
@@ -94,17 +97,38 @@ class OpenAIClient:
                 # Извлечение ответа
                 if data.get("choices") and len(data["choices"]) > 0:
                     content = data["choices"][0]["message"]["content"]
-                    logger.info(f"GPT analysis completed for INN {company_data.get('inn')}")
+                    logger.info(
+                        "GPT analysis completed",
+                        extra={
+                            "operation": "openai.analyze",
+                            "result": "success",
+                            "inn": company_data.get("inn"),
+                        },
+                    )
                     return content
                 else:
-                    logger.error("No choices in GPT response")
+                    logger.error(
+                        "No choices in GPT response",
+                        extra={"operation": "openai.analyze", "result": "error"},
+                    )
                     return "Ошибка: не получен ответ от GPT"
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"OpenAI API error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "OpenAI API error",
+                extra={
+                    "operation": "openai.request",
+                    "result": "error",
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error calling OpenAI API: {e}", exc_info=True)
+            logger.error(
+                "Error calling OpenAI API",
+                extra={"operation": "openai.request", "result": "error"},
+                exc_info=True,
+            )
             raise
     
     def _format_company_data(self, data: Dict[str, Any]) -> str:

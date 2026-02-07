@@ -54,7 +54,10 @@ class BitrixOAuthManager:
         query_string = "&".join([f"{k}={v}" for k, v in params.items()])
         auth_url = f"{self.domain}/oauth/authorize/?{query_string}"
         
-        logger.info(f"Generated OAuth URL: {auth_url}")
+        logger.info(
+            "Generated OAuth URL",
+            extra={"operation": "bitrix.oauth.url", "result": "success"},
+        )
         return auth_url
     
     async def exchange_code_for_tokens(self, code: str) -> Dict[str, Any]:
@@ -87,14 +90,28 @@ class BitrixOAuthManager:
                 # Сохранение токенов
                 self._save_tokens(token_data)
                 
-                logger.info("Successfully exchanged code for tokens")
+                logger.info(
+                    "Successfully exchanged code for tokens",
+                    extra={"operation": "bitrix.oauth.exchange", "result": "success"},
+                )
                 return token_data
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"OAuth token exchange error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "OAuth token exchange error",
+                extra={
+                    "operation": "bitrix.oauth.exchange",
+                    "result": "error",
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error exchanging code for tokens: {e}", exc_info=True)
+            logger.error(
+                "Error exchanging code for tokens",
+                extra={"operation": "bitrix.oauth.exchange", "result": "error"},
+                exc_info=True,
+            )
             raise
     
     async def refresh_access_token(self) -> Dict[str, Any]:
@@ -128,14 +145,28 @@ class BitrixOAuthManager:
                 # Сохранение новых токенов
                 self._save_tokens(new_tokens)
                 
-                logger.info("Successfully refreshed access token")
+                logger.info(
+                    "Successfully refreshed access token",
+                    extra={"operation": "bitrix.oauth.refresh", "result": "success"},
+                )
                 return new_tokens
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"Token refresh error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "Token refresh error",
+                extra={
+                    "operation": "bitrix.oauth.refresh",
+                    "result": "error",
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error refreshing token: {e}", exc_info=True)
+            logger.error(
+                "Error refreshing token",
+                extra={"operation": "bitrix.oauth.refresh", "result": "error"},
+                exc_info=True,
+            )
             raise
     
     async def get_valid_access_token(self) -> str:
@@ -152,7 +183,10 @@ class BitrixOAuthManager:
         
         # Проверка истечения токена
         if self._is_token_expired(tokens):
-            logger.info("Access token expired, refreshing...")
+            logger.info(
+                "Access token expired, refreshing",
+                extra={"operation": "bitrix.oauth.refresh", "result": "start"},
+            )
             tokens = await self.refresh_access_token()
         
         return tokens["access_token"]
@@ -170,7 +204,10 @@ class BitrixOAuthManager:
         with open(self.TOKEN_FILE, "w") as f:
             json.dump(tokens, f, indent=2)
         
-        logger.info(f"Tokens saved to {self.TOKEN_FILE}")
+        logger.info(
+            "Tokens saved",
+            extra={"operation": "bitrix.oauth.save", "result": "success"},
+        )
     
     def _load_tokens(self) -> Optional[Dict[str, Any]]:
         """
@@ -187,7 +224,11 @@ class BitrixOAuthManager:
                 tokens = json.load(f)
             return tokens
         except Exception as e:
-            logger.error(f"Error loading tokens: {e}")
+            logger.error(
+                "Error loading tokens",
+                extra={"operation": "bitrix.oauth.load", "result": "error"},
+                exc_info=True,
+            )
             return None
     
     def _is_token_expired(self, tokens: Dict[str, Any]) -> bool:

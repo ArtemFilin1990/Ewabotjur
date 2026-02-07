@@ -24,7 +24,10 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
     message = update.get("message")
     
     if not message:
-        logger.debug("Update does not contain a message, skipping")
+        logger.debug(
+            "Update does not contain a message",
+            extra={"operation": "telegram.update", "result": "ignored"},
+        )
         return
     
     # Извлечение данных из сообщения
@@ -32,10 +35,21 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
     text = message.get("text", "")
     
     if not chat_id:
-        logger.warning("No chat_id in message")
+        logger.warning(
+            "No chat_id in message",
+            extra={"operation": "telegram.message", "result": "invalid"},
+        )
         return
     
-    logger.info(f"Processing message from chat {chat_id}: {text[:50]}...")
+    logger.info(
+        "Processing Telegram message",
+        extra={
+            "operation": "telegram.message",
+            "result": "received",
+            "user_id": chat_id,
+            "message_length": len(text),
+        },
+    )
     
     # Команды
     if text.startswith("/start"):
@@ -111,7 +125,11 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
         await send_telegram_message(chat_id, response)
     
     except Exception as e:
-        logger.error(f"Error processing INN {inn}: {e}", exc_info=True)
+        logger.error(
+            "Error processing INN",
+            extra={"operation": "telegram.inn", "result": "error", "inn": inn, "user_id": chat_id},
+            exc_info=True,
+        )
         await send_telegram_message(
             chat_id,
             f"❌ Произошла ошибка при обработке запроса:\n{str(e)}\n\n"
@@ -186,7 +204,14 @@ async def _send_single_message(url: str, chat_id: int, text: str) -> None:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
-            logger.info(f"Message sent to chat {chat_id}")
+            logger.info(
+                "Message sent to Telegram chat",
+                extra={"operation": "telegram.send", "result": "success", "user_id": chat_id},
+            )
     except Exception as e:
-        logger.error(f"Error sending Telegram message: {e}", exc_info=True)
+        logger.error(
+            "Error sending Telegram message",
+            extra={"operation": "telegram.send", "result": "error", "user_id": chat_id},
+            exc_info=True,
+        )
         raise

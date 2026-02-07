@@ -21,13 +21,19 @@ async def handle_bitrix_event(event: Dict[str, Any]) -> None:
     """
     event_type = event.get("event")
     
-    logger.info(f"Processing Bitrix event: {event_type}")
+    logger.info(
+        "Processing Bitrix event",
+        extra={"operation": "bitrix.event", "result": "received", "event": event_type},
+    )
     
     # Обработка события нового сообщения
     if event_type == "ONIMBOTMESSAGEADD":
         await handle_message_add(event)
     else:
-        logger.debug(f"Unhandled event type: {event_type}")
+        logger.debug(
+            "Unhandled event type",
+            extra={"operation": "bitrix.event", "result": "ignored", "event": event_type},
+        )
 
 
 async def handle_message_add(event: Dict[str, Any]) -> None:
@@ -44,15 +50,30 @@ async def handle_message_add(event: Dict[str, Any]) -> None:
     user_id = data.get("USER", {}).get("ID")
     
     if not dialog_id:
-        logger.warning("No dialog_id in Bitrix event")
+        logger.warning(
+            "No dialog_id in Bitrix event",
+            extra={"operation": "bitrix.message", "result": "invalid"},
+        )
         return
     
     # Проверка что это не сообщение от самого бота
     if data.get("PARAMS", {}).get("FROM_USER_ID") == data.get("BOT", {}).get("ID"):
-        logger.debug("Ignoring message from bot itself")
+        logger.debug(
+            "Ignoring message from bot itself",
+            extra={"operation": "bitrix.message", "result": "ignored"},
+        )
         return
     
-    logger.info(f"Processing Bitrix message from dialog {dialog_id}: {message_text[:50]}...")
+    logger.info(
+        "Processing Bitrix message",
+        extra={
+            "operation": "bitrix.message",
+            "result": "received",
+            "dialog_id": dialog_id,
+            "user_id": user_id,
+            "message_length": len(message_text),
+        },
+    )
     
     # Парсинг ИНН из текста
     inn = extract_inn(message_text)
@@ -107,7 +128,11 @@ async def handle_message_add(event: Dict[str, Any]) -> None:
         )
     
     except Exception as e:
-        logger.error(f"Error processing INN {inn} in Bitrix: {e}", exc_info=True)
+        logger.error(
+            "Error processing INN in Bitrix",
+            extra={"operation": "bitrix.inn", "result": "error", "inn": inn, "dialog_id": dialog_id},
+            exc_info=True,
+        )
         await bitrix_client.send_message(
             dialog_id=dialog_id,
             message=f"❌ Произошла ошибка при обработке запроса:\n{str(e)}\n\n"

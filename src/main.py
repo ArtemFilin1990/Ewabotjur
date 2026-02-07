@@ -2,8 +2,9 @@
 Главная точка входа FastAPI приложения Ewabotjur
 Обрабатывает webhook от Telegram и Bitrix24
 """
-import os
 import logging
+import time
+from uuid import uuid4
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -12,12 +13,10 @@ from src.config import settings
 from src.handlers.telegram_handler import handle_telegram_update
 from src.handlers.bitrix_handler import handle_bitrix_event
 from src.integrations.bitrix24.oauth import handle_oauth_callback, initiate_oauth
+from src.utils.logging import configure_logging, reset_request_id, set_request_id
 
 # Настройка логирования
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper(), logging.INFO),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+configure_logging(settings.log_level)
 logger = logging.getLogger(__name__)
 
 
@@ -25,22 +24,37 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifecycle events для приложения"""
     # Startup
-    logger.info("Starting Ewabotjur application")
-    logger.info(f"App URL: {settings.app_url}")
-    logger.info(f"Port: {settings.port}")
+    logger.info("Starting Ewabotjur application", extra={"operation": "startup", "result": "success"})
+    logger.info(
+        "App URL configured",
+        extra={"operation": "startup", "result": "success", "app_url": settings.app_url},
+    )
+    logger.info(
+        "Port configured",
+        extra={"operation": "startup", "result": "success", "port": settings.port},
+    )
     
     # Проверка обязательных переменных
     missing = settings.validate_required()
     if missing:
-        logger.warning(f"Missing environment variables: {', '.join(missing)}")
-        logger.warning("Some features may not work correctly")
+        logger.warning(
+            "Missing environment variables",
+            extra={"operation": "config.validation", "result": "warning", "missing": missing},
+        )
+        logger.warning(
+            "Some features may not work correctly",
+            extra={"operation": "config.validation", "result": "warning"},
+        )
     else:
-        logger.info("All required environment variables are set")
+        logger.info(
+            "All required environment variables are set",
+            extra={"operation": "config.validation", "result": "success"},
+        )
     
     yield
     
     # Shutdown
-    logger.info("Shutting down Ewabotjur application")
+    logger.info("Shutting down Ewabotjur application", extra={"operation": "shutdown", "result": "success"})
 
 
 # Создание FastAPI приложения
@@ -50,6 +64,44 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    """Middleware для request_id и метрик времени."""
+    incoming_request_id = request.headers.get("X-Request-ID")
+    request_id = incoming_request_id or str(uuid4())
+    token = set_request_id(request_id)
+    start_time = time.perf_counter()
+    try:
+        response = await call_next(request)
+        duration_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.info(
+            "Request processed",
+            extra={
+                "operation": "http_request",
+                "result": "success",
+                "duration_ms": duration_ms,
+                "request_id": request_id,
+            },
+        )
+        response.headers["X-Request-ID"] = request_id
+        return response
+    except Exception:
+        duration_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.error(
+            "Request failed",
+            extra={
+                "operation": "http_request",
+                "result": "error",
+                "duration_ms": duration_ms,
+                "request_id": request_id,
+            },
+            exc_info=True,
+        )
+        raise
+    finally:
+        reset_request_id(token)
 
 
 @app.get("/")
@@ -82,7 +134,10 @@ async def telegram_webhook(secret: str, request: Request):
     """
     # Проверка секретного ключа
     if secret != settings.tg_webhook_secret:
-        logger.warning(f"Invalid webhook secret attempt from {request.client.host}")
+        logger.warning(
+            "Invalid webhook secret attempt",
+            extra={"operation": "telegram.webhook", "result": "forbidden"},
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid webhook secret"
@@ -91,7 +146,14 @@ async def telegram_webhook(secret: str, request: Request):
     try:
         # Получение тела запроса
         update_data = await request.json()
-        logger.info(f"Received Telegram update: {update_data.get('update_id', 'unknown')}")
+        logger.info(
+            "Received Telegram update",
+            extra={
+                "operation": "telegram.webhook",
+                "result": "success",
+                "update_id": update_data.get("update_id", "unknown"),
+            },
+        )
         
         # Обработка update
         await handle_telegram_update(update_data)
@@ -99,7 +161,11 @@ async def telegram_webhook(secret: str, request: Request):
         return JSONResponse({"ok": True})
     
     except Exception as e:
-        logger.error(f"Error processing Telegram webhook: {e}", exc_info=True)
+        logger.error(
+            "Error processing Telegram webhook",
+            extra={"operation": "telegram.webhook", "result": "error"},
+            exc_info=True,
+        )
         # Telegram ожидает 200 OK даже при ошибках
         return JSONResponse({"ok": False, "error": str(e)})
 
@@ -115,7 +181,14 @@ async def bitrix_webhook(request: Request):
         event_data = await request.form()
         event_dict = dict(event_data)
         
-        logger.info(f"Received Bitrix event: {event_dict.get('event', 'unknown')}")
+        logger.info(
+            "Received Bitrix event",
+            extra={
+                "operation": "bitrix.webhook",
+                "result": "success",
+                "event": event_dict.get("event", "unknown"),
+            },
+        )
         
         # Обработка события
         await handle_bitrix_event(event_dict)
@@ -123,7 +196,11 @@ async def bitrix_webhook(request: Request):
         return JSONResponse({"success": True})
     
     except Exception as e:
-        logger.error(f"Error processing Bitrix webhook: {e}", exc_info=True)
+        logger.error(
+            "Error processing Bitrix webhook",
+            extra={"operation": "bitrix.webhook", "result": "error"},
+            exc_info=True,
+        )
         return JSONResponse({"success": False, "error": str(e)})
 
 
@@ -140,7 +217,11 @@ async def start_bitrix_oauth():
             "message": "Перейдите по ссылке для авторизации в Bitrix24"
         }
     except Exception as e:
-        logger.error(f"Error initiating OAuth: {e}", exc_info=True)
+        logger.error(
+            "Error initiating OAuth",
+            extra={"operation": "bitrix.oauth.start", "result": "error"},
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"OAuth initiation failed: {str(e)}"
@@ -154,7 +235,10 @@ async def bitrix_oauth_callback(code: str = None, error: str = None):
     URL: GET /oauth/bitrix/callback?code=...
     """
     if error:
-        logger.error(f"OAuth error: {error}")
+        logger.error(
+            "OAuth error",
+            extra={"operation": "bitrix.oauth.callback", "result": "error"},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"OAuth error: {error}"
@@ -178,7 +262,11 @@ async def bitrix_oauth_callback(code: str = None, error: str = None):
         }
     
     except Exception as e:
-        logger.error(f"Error handling OAuth callback: {e}", exc_info=True)
+        logger.error(
+            "Error handling OAuth callback",
+            extra={"operation": "bitrix.oauth.callback", "result": "error"},
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"OAuth callback failed: {str(e)}"
@@ -191,7 +279,10 @@ if __name__ == "__main__":
     # Запуск приложения
     # ВАЖНО: слушаем порт из переменной окружения PORT
     port = settings.port
-    logger.info(f"Starting server on port {port}")
+    logger.info(
+        "Starting server",
+        extra={"operation": "startup", "result": "success", "port": port},
+    )
     
     uvicorn.run(
         "src.main:app",
