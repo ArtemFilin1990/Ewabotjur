@@ -8,6 +8,7 @@
 - Переменные окружения:
   - `PORT` (по умолчанию 3000)
   - `TELEGRAM_WEBHOOK_SECRET`
+  - `TELEGRAM_BOT_TOKEN`
   - `BITRIX_CLIENT_ID`
   - `BITRIX_CLIENT_SECRET`
   - `DADATA_API_KEY`
@@ -26,7 +27,7 @@ npm run start
 
 ## Эндпоинты
 - `GET /` — health-check, 200 OK
-- `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET`, возвращает принятый update
+- `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` и отвечает в чат через `TELEGRAM_BOT_TOKEN`
 - `GET /bitrix/install` — отвечает готовностью приложения и наличием Bitrix-конфигурации
 - `POST /bitrix/handler` — принимает события Bitrix24 и эхо-возвращает тело запроса
 - `POST /api/dadata/party` — ищет контрагента по ИНН в DaData (тело `{ "inn": "3525405517" }`)
