@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 
 app.get('/', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).send('OK');
 });
 
 app.use('/webhook/telegram', telegramRouter);
