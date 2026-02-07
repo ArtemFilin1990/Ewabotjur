@@ -41,6 +41,13 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -d "url=https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
+Проверка статуса webhook (метод Telegram API, а не путь вашего сервера):
+```bash
+curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
+```
+
+Важно: `https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
+
 ## Bitrix24
 - `GET /bitrix/install` можно использовать как endpoint установки локального приложения
 - `POST /bitrix/handler` предназначен для входящих событий Bitrix24
