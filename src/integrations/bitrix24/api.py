@@ -58,17 +58,39 @@ class BitrixAPIClient:
                 data = response.json()
                 
                 if data.get("error"):
-                    logger.error(f"Bitrix24 API error: {data['error_description']}")
+                    logger.error(
+                        "Bitrix24 API error",
+                        extra={
+                            "operation": "bitrix.message.send",
+                            "result": "error",
+                            "dialog_id": dialog_id,
+                            "error": data.get("error"),
+                        },
+                    )
                     raise Exception(f"Bitrix24 API error: {data['error_description']}")
-                
-                logger.info(f"Message sent to dialog {dialog_id}")
+
+                logger.info(
+                    "Message sent to Bitrix dialog",
+                    extra={"operation": "bitrix.message.send", "result": "success", "dialog_id": dialog_id},
+                )
                 return data
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error sending message: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "HTTP error sending Bitrix message",
+                extra={
+                    "operation": "bitrix.message.send",
+                    "result": "error",
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error sending message: {e}", exc_info=True)
+            logger.error(
+                "Error sending Bitrix message",
+                extra={"operation": "bitrix.message.send", "result": "error"},
+                exc_info=True,
+            )
             raise
     
     async def call_method(
@@ -102,16 +124,36 @@ class BitrixAPIClient:
                 data = response.json()
                 
                 if data.get("error"):
-                    logger.error(f"Bitrix24 API error in {method}: {data['error_description']}")
+                    logger.error(
+                        "Bitrix24 API error",
+                        extra={
+                            "operation": "bitrix.api.call",
+                            "result": "error",
+                            "method": method,
+                            "error": data.get("error"),
+                        },
+                    )
                     raise Exception(f"Bitrix24 API error: {data['error_description']}")
                 
                 return data
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error calling {method}: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "HTTP error calling Bitrix API",
+                extra={
+                    "operation": "bitrix.api.call",
+                    "result": "error",
+                    "method": method,
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error calling {method}: {e}", exc_info=True)
+            logger.error(
+                "Error calling Bitrix API",
+                extra={"operation": "bitrix.api.call", "result": "error", "method": method},
+                exc_info=True,
+            )
             raise
 
 

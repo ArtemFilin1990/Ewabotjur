@@ -55,17 +55,34 @@ class DaDataClient:
                 
                 if data.get("suggestions") and len(data["suggestions"]) > 0:
                     suggestion = data["suggestions"][0]
-                    logger.info(f"Found company data for INN {inn}")
+                    logger.info(
+                        "Found company data",
+                        extra={"operation": "dadata.find", "result": "success", "inn": inn},
+                    )
                     return self._parse_company_data(suggestion)
                 else:
-                    logger.warning(f"No data found for INN {inn}")
+                    logger.warning(
+                        "No data found",
+                        extra={"operation": "dadata.find", "result": "not_found", "inn": inn},
+                    )
                     return None
         
         except httpx.HTTPStatusError as e:
-            logger.error(f"DaData API error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                "DaData API error",
+                extra={
+                    "operation": "dadata.find",
+                    "result": "error",
+                    "status_code": e.response.status_code,
+                },
+            )
             raise
         except Exception as e:
-            logger.error(f"Error calling DaData API: {e}", exc_info=True)
+            logger.error(
+                "Error calling DaData API",
+                extra={"operation": "dadata.find", "result": "error"},
+                exc_info=True,
+            )
             raise
     
     def _parse_company_data(self, suggestion: Dict[str, Any]) -> Dict[str, Any]:
