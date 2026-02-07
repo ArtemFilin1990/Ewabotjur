@@ -23,7 +23,7 @@ npm run start
 - `POST /bitrix/handler` — принимает события Bitrix24 и эхо-возвращает тело запроса
 
 ## Деплой в Amvera
-- Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `npm run start`, containerPort: 3000)
+- Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
 - Установите переменные окружения через UI Amvera (`PORT`, `TELEGRAM_WEBHOOK_SECRET`, `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
 
 ## Настройка Telegram webhook
