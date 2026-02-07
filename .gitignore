@@ -65,10 +65,18 @@ node_modules/
 
 # Logs
 *.log
+logs/
 
 # Temporary files
 /tmp/
 *.tmp
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+.cache/
 
 # Storage directory
 storage/
@@ -77,9 +85,13 @@ data/
 *.sqlite3
 *.db
 
-# Logs
-logs/
-*.log
+# Data artifacts
+dumps/
+exports/
+backups/
+uploads/
+*.dump
+*.bak
 
 # Bitrix24 tokens (if stored in files)
 bitrix_tokens.json
@@ -89,3 +101,14 @@ oauth_tokens.json
 mongodb_data/
 prometheus_data/
 grafana_data/
+
+# Archive files (backups, old versions)
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# AI assistant configs (personal)
+.gemini/
+.cursor/
+.aider*
