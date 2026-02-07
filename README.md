@@ -101,6 +101,32 @@ The server will start on `http://localhost:3000`.
 
 Test with: `curl http://localhost:3000/health`
 
+## Data Management
+
+**Runtime Data (Not in Git):**
+
+The application uses runtime directories for storing temporary and operational data. These directories are automatically created when needed and are excluded from git via `.gitignore`:
+
+- `storage/` - Runtime token storage and session data
+- `data/` - Runtime SQLite databases and memory stores
+- `logs/` - Application logs (if file logging enabled)
+
+**Important:** Never commit runtime data, logs, database files, or any user-generated content to git.
+
+**Adding New Data:**
+
+If you need to add reference data or configuration files:
+1. Place them in a dedicated directory like `config/` or `reference/`
+2. Document their purpose in this README
+3. Ensure they don't contain secrets or sensitive information
+
+**Forbidden in Git:**
+- Personal data or user information
+- API keys, tokens, passwords (use `.env` instead)
+- Database dumps or exports
+- Large binary files (unless necessary and tracked with Git LFS)
+- Temporary files, logs, or build artifacts
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) for:
