@@ -41,9 +41,9 @@ ENV PYTHONUNBUFFERED=1 \
 # Expose port
 EXPOSE 3000
 
-# Health check
+# Health check (using httpx which is already in requirements)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:3000/health', timeout=5)" || exit 1
+    CMD python -c "import httpx; httpx.get('http://localhost:3000/health', timeout=5.0)" || exit 1
 
 # Start application - ВАЖНО: слушаем process.env.PORT
 CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT}

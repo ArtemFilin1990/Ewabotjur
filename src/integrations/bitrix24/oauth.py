@@ -14,9 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class BitrixOAuthManager:
-    """Менеджер OAuth для Bitrix24 с автоматическим обновлением токенов"""
+    """
+    Менеджер OAuth для Bitrix24 с автоматическим обновлением токенов
     
-    # Файл для хранения токенов (в продакшене использовать БД)
+    ВАЖНО для продакшена на Amvera:
+    - Токены хранятся в файле storage/bitrix_tokens.json
+    - В контейнере Amvera нужно смонтировать persistent volume для /app/storage
+    - Альтернативно: использовать БД (PostgreSQL, Redis) для хранения токенов
+    - Без persistent storage токены будут теряться при рестарте контейнера
+    """
+    
+    # Файл для хранения токенов
+    # TODO: В продакшене рекомендуется использовать БД или persistent volume
     TOKEN_FILE = "storage/bitrix_tokens.json"
     
     def __init__(self):
