@@ -1,9 +1,9 @@
-# Конфигурация для Amvera
-# Указываем containerPort, т.к. приложение слушает порт 3000, а не 80
-
-toolchain:
-  name: docker
+meta:
+  environment: node
+  toolchain:
+    name: npm
+  version: 18
 
 run:
-  # Порт, который слушает контейнер (должен совпадать с ENV PORT в Dockerfile)
+  command: npm run start
   containerPort: 3000
