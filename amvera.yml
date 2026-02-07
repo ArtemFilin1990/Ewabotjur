@@ -1,0 +1,8 @@
+# Конфигурация для Amvera
+# Документация: https://docs.amvera.ru/applications/configuration/docker.html
+
+toolchain:
+  name: docker
+
+run:
+  containerPort: 3000

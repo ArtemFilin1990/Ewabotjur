@@ -12,8 +12,11 @@ from src.app import app
 def run() -> None:
     """Run the API server with Uvicorn."""
 
-    port = int(os.getenv("PORT", "8000"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # ВАЖНО: для Amvera - слушаем порт из переменной окружения PORT
+    port = int(os.getenv("PORT", "3000"))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    uvicorn.run(app, host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":

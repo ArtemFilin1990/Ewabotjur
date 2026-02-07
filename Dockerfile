@@ -1,5 +1,5 @@
-# Базовый образ Python
-FROM python:3.11-slim
+# Multi-stage build for Amvera deployment
+FROM python:3.11-slim AS base
 
 # Установка рабочей директории
 WORKDIR /app
@@ -13,28 +13,31 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
-# Копирование файла зависимостей
+# Stage 1: Dependencies
+FROM base AS deps
 COPY requirements.txt .
-
-# Установка Python зависимостей
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM base AS runtime
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
 
 # Копирование исходного кода
 COPY . .
 
-# Создание директории для хранилища
-RUN mkdir -p /app/storage
+# Создание директорий для хранилища
+RUN mkdir -p /app/storage /app/data
 
 # Переменные окружения
 ENV PYTHONUNBUFFERED=1
-ENV TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-ENV DADATA_TOKEN=${DADATA_TOKEN}
-ENV ALLOWED_CHAT_IDS=${ALLOWED_CHAT_IDS}
-ENV WORKER_AUTH_TOKEN=${WORKER_AUTH_TOKEN}
-ENV MEMORY_STORE_PATH=${MEMORY_STORE_PATH}
+ENV PYTHONPATH=/app
 
-# Открытие порта API
-EXPOSE 8000
+# ВАЖНО: приложение должно слушать process.env.PORT (для Amvera)
+ENV PORT=3000
 
-# Команда запуска воркера
+# Открытие порта
+EXPOSE 3000
+
+# Команда запуска FastAPI сервера
 CMD ["python", "-m", "src.main"]
