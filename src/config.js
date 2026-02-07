@@ -68,6 +68,12 @@ function validateConfig() {
   if (config.dadataCount <= 0) {
     issues.push('DADATA_COUNT must be greater than 0');
   }
+  if (!config.telegramWebhookSecret) {
+    issues.push('TELEGRAM_WEBHOOK_SECRET is not set');
+  }
+  if (!config.telegramBotToken) {
+    issues.push('TELEGRAM_BOT_TOKEN is not set');
+  }
   return issues;
 }
 
@@ -77,6 +83,8 @@ const config = {
   dadataCount: parsePositiveInteger(readEnv('DADATA_COUNT'), DEFAULT_DADATA_COUNT),
   dadataEnabled: parseBoolean(readEnv('ENABLE_DADATA') ?? 'true'),
   dadataInnLengths: DADATA_INN_LENGTHS,
+  telegramWebhookSecret: readEnv('TELEGRAM_WEBHOOK_SECRET'),
+  telegramBotToken: readEnv('TELEGRAM_BOT_TOKEN'),
 };
 
 module.exports = {
