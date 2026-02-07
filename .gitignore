@@ -38,8 +38,23 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Environment variables
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+*.cert
+*.pfx
+*_rsa
+*_dsa
+*.secrets
+secret.txt
+secrets.txt
+credentials.json
+token.json
 
 # Generated files
 protocol_bitrix_template.docx
@@ -58,10 +73,17 @@ node_modules/
 # Storage directory
 storage/
 data/
+*.sqlite
+*.sqlite3
+*.db
 
 # Logs
 logs/
 *.log
+
+# Bitrix24 tokens (if stored in files)
+bitrix_tokens.json
+oauth_tokens.json
 
 # Docker volumes
 mongodb_data/

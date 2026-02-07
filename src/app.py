@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 
 from src.bot.schemas import TelegramUpdate
 from src.handlers.telegram_handler import process_update
+from src.handlers.bitrix_handler import process_bitrix_event
 from src.config import AppConfig, load_config
 from src.logging_config import configure_logging, get_logger
 
@@ -143,8 +144,8 @@ async def bitrix_webhook(
             },
         )
         
-        # TODO: Process Bitrix24 event (imbot message)
-        # Extract message, dialog_id, etc. and process
+        # Process Bitrix24 event
+        await process_bitrix_event(data, config, logger, request_id)
         
         return JSONResponse(
             status_code=200,
@@ -183,6 +184,7 @@ async def bitrix_oauth_callback(
     
     try:
         from src.integrations.bitrix24 import BitrixOAuthClient
+        from src.storage.bitrix_token_store import BitrixTokenStore
         
         oauth_client = BitrixOAuthClient(
             client_id=config.bitrix_client_id,
@@ -193,10 +195,12 @@ async def bitrix_oauth_callback(
         
         tokens = await oauth_client.exchange_code(code)
         
-        # TODO: Store tokens securely (database, encrypted storage, etc.)
-        # For now, just log success
+        # Store tokens securely
+        token_store = BitrixTokenStore(config.memory_store_path)
+        await token_store.save_tokens(tokens)
+        
         logger.info(
-            "bitrix oauth token obtained",
+            "bitrix oauth token obtained and stored",
             extra={
                 "request_id": request_id,
                 "expires_at": tokens.expires_at,
@@ -205,7 +209,7 @@ async def bitrix_oauth_callback(
         
         return {
             "status": "success",
-            "message": "Authorization successful. Tokens obtained.",
+            "message": "Authorization successful. Tokens saved securely.",
             "request_id": request_id,
         }
         
