@@ -48,14 +48,14 @@ async def handle_message_add(event: Dict[str, Any]) -> None:
     message_text = data.get("PARAMS", {}).get("MESSAGE", "")
     dialog_id = data.get("PARAMS", {}).get("DIALOG_ID")
     user_id = data.get("USER", {}).get("ID")
-    
+
     if not dialog_id:
         logger.warning(
             "No dialog_id in Bitrix event",
             extra={"operation": "bitrix.message", "result": "invalid"},
         )
         return
-    
+
     # Проверка что это не сообщение от самого бота
     if data.get("PARAMS", {}).get("FROM_USER_ID") == data.get("BOT", {}).get("ID"):
         logger.debug(
@@ -63,7 +63,19 @@ async def handle_message_add(event: Dict[str, Any]) -> None:
             extra={"operation": "bitrix.message", "result": "ignored"},
         )
         return
-    
+
+    # Ограничение длины входящего текста для защиты от атак
+    if len(message_text) > 1000:
+        logger.warning(
+            "Message too long",
+            extra={"operation": "bitrix.message", "result": "rejected", "length": len(message_text)},
+        )
+        await bitrix_client.send_message(
+            dialog_id=dialog_id,
+            message="❌ Сообщение слишком длинное. Пожалуйста, отправьте ИНН (10 или 12 цифр)."
+        )
+        return
+
     logger.info(
         "Processing Bitrix message",
         extra={

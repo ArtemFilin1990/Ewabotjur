@@ -74,13 +74,22 @@ class DaDataClient:
                     "operation": "dadata.find",
                     "result": "error",
                     "status_code": e.response.status_code,
+                    "inn": inn,
                 },
+                exc_info=True,
+            )
+            raise
+        except httpx.TimeoutException as e:
+            logger.error(
+                "DaData API timeout",
+                extra={"operation": "dadata.find", "result": "timeout", "inn": inn},
+                exc_info=True,
             )
             raise
         except Exception as e:
             logger.error(
                 "Error calling DaData API",
-                extra={"operation": "dadata.find", "result": "error"},
+                extra={"operation": "dadata.find", "result": "error", "inn": inn},
                 exc_info=True,
             )
             raise

@@ -111,8 +111,8 @@ class OpenAIClient:
                         "No choices in GPT response",
                         extra={"operation": "openai.analyze", "result": "error"},
                     )
-                    return "Ошибка: не получен ответ от GPT"
-        
+                    return "⚠️ Ошибка: не получен ответ от GPT. Попробуйте позже."
+
         except httpx.HTTPStatusError as e:
             logger.error(
                 "OpenAI API error",
@@ -121,15 +121,31 @@ class OpenAIClient:
                     "result": "error",
                     "status_code": e.response.status_code,
                 },
+                exc_info=True,
             )
-            raise
+            # Return user-friendly error instead of crashing
+            if e.response.status_code == 401:
+                return "⚠️ Ошибка конфигурации: неверный API ключ OpenAI"
+            elif e.response.status_code == 429:
+                return "⚠️ Превышен лимит запросов к OpenAI. Попробуйте позже."
+            elif e.response.status_code >= 500:
+                return "⚠️ Сервис OpenAI временно недоступен. Попробуйте позже."
+            else:
+                return f"⚠️ Ошибка OpenAI API (код {e.response.status_code})"
+        except httpx.TimeoutException as e:
+            logger.error(
+                "OpenAI API timeout",
+                extra={"operation": "openai.request", "result": "timeout"},
+                exc_info=True,
+            )
+            return "⚠️ Превышено время ожидания ответа от OpenAI. Попробуйте позже."
         except Exception as e:
             logger.error(
                 "Error calling OpenAI API",
                 extra={"operation": "openai.request", "result": "error"},
                 exc_info=True,
             )
-            raise
+            return f"⚠️ Непредвиденная ошибка при анализе: {str(e)}"
     
     def _format_company_data(self, data: Dict[str, Any]) -> str:
         """
