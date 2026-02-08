@@ -85,6 +85,10 @@ data/
 *.sqlite3
 *.db
 
+# Allow application storage code
+!src/storage/
+!src/storage/**
+
 # Data artifacts
 dumps/
 exports/

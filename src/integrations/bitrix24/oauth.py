@@ -2,13 +2,17 @@
 Bitrix24 OAuth 2.0 интеграция с автоматическим обновлением токенов
 """
 import logging
-import json
-import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timedelta
 import httpx
 
 from src.config import settings
+from src.storage.bitrix_tokens import (
+    ensure_schema,
+    load_latest_tokens,
+    save_tokens,
+    BitrixTokenRecord,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,24 +22,16 @@ class BitrixOAuthManager:
     Менеджер OAuth для Bitrix24 с автоматическим обновлением токенов
     
     ВАЖНО для продакшена на Amvera:
-    - Токены хранятся в файле storage/bitrix_tokens.json
-    - В контейнере Amvera нужно смонтировать persistent volume для /app/storage
-    - Альтернативно: использовать БД (PostgreSQL, Redis) для хранения токенов
-    - Без persistent storage токены будут теряться при рестарте контейнера
+    - Токены хранятся в PostgreSQL (таблица bitrix_tokens)
+    - Требуется настроить DATABASE_URL в переменных окружения
     """
-    
-    # Файл для хранения токенов
-    # TODO: В продакшене рекомендуется использовать БД или persistent volume
-    TOKEN_FILE = "storage/bitrix_tokens.json"
     
     def __init__(self):
         self.domain = settings.bitrix_domain
         self.client_id = settings.bitrix_client_id
         self.client_secret = settings.bitrix_client_secret
         self.redirect_url = settings.bitrix_redirect_url
-        
-        # Создание директории для хранения токенов
-        os.makedirs(os.path.dirname(self.TOKEN_FILE), exist_ok=True)
+        self.database_url = settings.database_url
     
     def get_auth_url(self) -> str:
         """
@@ -88,7 +84,7 @@ class BitrixOAuthManager:
                 token_data = response.json()
                 
                 # Сохранение токенов
-                self._save_tokens(token_data)
+                await save_tokens(token_data, self.domain)
                 
                 logger.info(
                     "Successfully exchanged code for tokens",
@@ -121,9 +117,9 @@ class BitrixOAuthManager:
         Returns:
             Новые токены
         """
-        tokens = self._load_tokens()
-        
-        if not tokens or "refresh_token" not in tokens:
+        tokens = await self._load_tokens()
+
+        if not tokens or not tokens.refresh_token:
             raise ValueError("No refresh token available")
         
         url = f"{self.domain}/oauth/token/"
@@ -132,7 +128,7 @@ class BitrixOAuthManager:
             "grant_type": "refresh_token",
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-            "refresh_token": tokens["refresh_token"]
+            "refresh_token": tokens.refresh_token
         }
         
         try:
@@ -143,7 +139,7 @@ class BitrixOAuthManager:
                 new_tokens = response.json()
                 
                 # Сохранение новых токенов
-                self._save_tokens(new_tokens)
+                await save_tokens(new_tokens, self.domain)
                 
                 logger.info(
                     "Successfully refreshed access token",
@@ -176,8 +172,8 @@ class BitrixOAuthManager:
         Returns:
             Валидный access token
         """
-        tokens = self._load_tokens()
-        
+        tokens = await self._load_tokens()
+
         if not tokens:
             raise ValueError("No tokens available. Please complete OAuth flow first.")
         
@@ -187,51 +183,23 @@ class BitrixOAuthManager:
                 "Access token expired, refreshing",
                 extra={"operation": "bitrix.oauth.refresh", "result": "start"},
             )
-            tokens = await self.refresh_access_token()
-        
-        return tokens["access_token"]
-    
-    def _save_tokens(self, tokens: Dict[str, Any]) -> None:
-        """
-        Сохранение токенов в файл
-        
-        Args:
-            tokens: Словарь с токенами
-        """
-        # Добавление timestamp для отслеживания истечения
-        tokens["saved_at"] = datetime.now().isoformat()
-        
-        with open(self.TOKEN_FILE, "w") as f:
-            json.dump(tokens, f, indent=2)
-        
-        logger.info(
-            "Tokens saved",
-            extra={"operation": "bitrix.oauth.save", "result": "success"},
-        )
-    
-    def _load_tokens(self) -> Optional[Dict[str, Any]]:
-        """
-        Загрузка токенов из файла
-        
-        Returns:
-            Словарь с токенами или None
-        """
-        if not os.path.exists(self.TOKEN_FILE):
-            return None
-        
+            tokens = await self._load_tokens()
+
+        return tokens.access_token
+
+    async def _load_tokens(self) -> BitrixTokenRecord | None:
+        """Загрузка токенов из базы данных."""
         try:
-            with open(self.TOKEN_FILE, "r") as f:
-                tokens = json.load(f)
-            return tokens
-        except Exception as e:
+            return await load_latest_tokens(self.domain)
+        except Exception:
             logger.error(
-                "Error loading tokens",
+                "Error loading tokens from database",
                 extra={"operation": "bitrix.oauth.load", "result": "error"},
                 exc_info=True,
             )
             return None
     
-    def _is_token_expired(self, tokens: Dict[str, Any]) -> bool:
+    def _is_token_expired(self, tokens: BitrixTokenRecord) -> bool:
         """
         Проверка истечения токена
         
@@ -241,16 +209,18 @@ class BitrixOAuthManager:
         Returns:
             True если токен истек
         """
-        if "saved_at" not in tokens or "expires_in" not in tokens:
-            return True
-        
-        saved_at = datetime.fromisoformat(tokens["saved_at"])
-        expires_in = int(tokens["expires_in"])
-        
+        saved_at = tokens.saved_at
+        expires_in = int(tokens.expires_in)
+
         # Обновляем токен за 5 минут до истечения
-        expiry_time = saved_at + timedelta(seconds=expires_in - 300)
-        
-        return datetime.now() >= expiry_time
+        buffer_seconds = max(expires_in - 300, 0)
+        expiry_time = saved_at + timedelta(seconds=buffer_seconds)
+
+        return datetime.now(saved_at.tzinfo) >= expiry_time
+
+    async def ensure_storage_ready(self) -> None:
+        """Ensure storage schema exists."""
+        await ensure_schema()
 
 
 # Глобальный экземпляр менеджера
