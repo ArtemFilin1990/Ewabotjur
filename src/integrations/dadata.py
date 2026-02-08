@@ -54,7 +54,7 @@ class DaDataClient:
             response.raise_for_status()
             data = response.json()
             
-            if data.get("suggestions") and len(data["suggestions"]) > 0:
+            if data.get("suggestions"):
                 suggestion = data["suggestions"][0]
                 logger.info(
                     "Found company data",
@@ -107,37 +107,42 @@ class DaDataClient:
         """
         data = suggestion.get("data", {})
         
+        name = data.get("name") or {}
+        address = data.get("address") or {}
+        state = data.get("state") or {}
+
         # Основные данные
         result = {
             "inn": data.get("inn"),
             "kpp": data.get("kpp"),
             "ogrn": data.get("ogrn"),
             "name": {
-                "full": data.get("name", {}).get("full_with_opf"),
-                "short": data.get("name", {}).get("short_with_opf"),
+                "full": name.get("full_with_opf"),
+                "short": name.get("short_with_opf"),
             },
             "okved": data.get("okved"),
             "address": {
-                "value": data.get("address", {}).get("value"),
-                "data": data.get("address", {}).get("data", {})
+                "value": address.get("value"),
+                "data": address.get("data", {})
             },
             "management": data.get("management"),
             "state": {
-                "status": data.get("state", {}).get("status"),
-                "liquidation_date": data.get("state", {}).get("liquidation_date"),
-                "registration_date": data.get("state", {}).get("registration_date"),
+                "status": state.get("status"),
+                "liquidation_date": state.get("liquidation_date"),
+                "registration_date": state.get("registration_date"),
             },
             "opf": data.get("opf"),
             "type": data.get("type"),
         }
         
         # Финансовые данные (если доступны на тарифе)
-        if "finance" in data:
+        finance = data.get("finance")
+        if finance:
             result["finance"] = {
-                "revenue": data.get("finance", {}).get("revenue"),
-                "expense": data.get("finance", {}).get("expense"),
-                "profit": data.get("finance", {}).get("profit"),
-                "year": data.get("finance", {}).get("year"),
+                "revenue": finance.get("revenue"),
+                "expense": finance.get("expense"),
+                "profit": finance.get("profit"),
+                "year": finance.get("year"),
             }
         
         # Количество сотрудников

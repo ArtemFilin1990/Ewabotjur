@@ -30,30 +30,31 @@ def _get_request_id() -> Optional[str]:
 class JsonLogFormatter(logging.Formatter):
     """JSON-формат логов с обязательными полями."""
 
+    _RESERVED = frozenset({
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "message",
+    })
+
     def format(self, record: logging.LogRecord) -> str:
-        reserved = {
-            "name",
-            "msg",
-            "args",
-            "levelname",
-            "levelno",
-            "pathname",
-            "filename",
-            "module",
-            "exc_info",
-            "exc_text",
-            "stack_info",
-            "lineno",
-            "funcName",
-            "created",
-            "msecs",
-            "relativeCreated",
-            "thread",
-            "threadName",
-            "processName",
-            "process",
-            "message",
-        }
         payload: dict[str, Any] = {
             "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
@@ -69,7 +70,7 @@ class JsonLogFormatter(logging.Formatter):
         extra_fields = {
             key: value
             for key, value in record.__dict__.items()
-            if key not in reserved and key not in payload
+            if key not in self._RESERVED and key not in payload
         }
         if extra_fields:
             payload["extra"] = extra_fields

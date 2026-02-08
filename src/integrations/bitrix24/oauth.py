@@ -184,7 +184,8 @@ class BitrixOAuthManager:
                 "Access token expired, refreshing",
                 extra={"operation": "bitrix.oauth.refresh", "result": "start"},
             )
-            tokens = await self._load_tokens()
+            new_token_data = await self.refresh_access_token()
+            return new_token_data["access_token"]
 
         return tokens.access_token
 

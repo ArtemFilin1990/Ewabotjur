@@ -3,6 +3,7 @@
 Обрабатывает webhook от Telegram и Bitrix24
 """
 import logging
+import re as _re
 import time
 from uuid import uuid4
 from contextlib import asynccontextmanager
@@ -238,32 +239,11 @@ def _parse_bitrix_form(form_data) -> dict:
     return event_dict
 
 
-def _split_bracket_key(key: str) -> list[str]:
-    if "[" not in key:
-        return [key]
+_BRACKET_RE = _re.compile(r"[^\[\]]+")
 
-    parts: list[str] = []
-    buffer = ""
-    i = 0
-    while i < len(key):
-        char = key[i]
-        if char == "[":
-            if buffer:
-                parts.append(buffer)
-                buffer = ""
-            i += 1
-            inner = ""
-            while i < len(key) and key[i] != "]":
-                inner += key[i]
-                i += 1
-            if inner:
-                parts.append(inner)
-        else:
-            buffer += char
-        i += 1
-    if buffer:
-        parts.append(buffer)
-    return parts
+
+def _split_bracket_key(key: str) -> list[str]:
+    return _BRACKET_RE.findall(key)
 
 
 @app.get("/oauth/bitrix")
