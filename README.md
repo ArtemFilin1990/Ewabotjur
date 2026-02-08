@@ -27,10 +27,11 @@ npm run start
 
 ## Эндпоинты
 - `GET /` — health-check, 200 OK
+- `GET /health` — health-check для Docker, возвращает `{"status": "ok"}`
 - `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`) и отвечает в чат через `TELEGRAM_BOT_TOKEN`
-- `GET /bitrix/install` — отвечает готовностью приложения и наличием Bitrix-конфигурации
-- `POST /bitrix/handler` — принимает события Bitrix24 и эхо-возвращает тело запроса
-- `POST /api/dadata/party` — ищет контрагента по ИНН в DaData (тело `{ "inn": "3525405517" }`)
+- `POST /bitrix/event` — принимает события Bitrix24
+- `GET /oauth/bitrix` — инициация OAuth процесса для Bitrix24
+- `GET /oauth/bitrix/callback` — callback для OAuth Bitrix24
 
 ## Деплой в Amvera
 - Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
@@ -50,8 +51,9 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 Важно: `https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
 
 ## Bitrix24
-- `GET /bitrix/install` можно использовать как endpoint установки локального приложения
-- `POST /bitrix/handler` предназначен для входящих событий Bitrix24
+- `GET /oauth/bitrix` — инициация OAuth процесса для авторизации в Bitrix24
+- `GET /oauth/bitrix/callback` — callback endpoint для завершения OAuth
+- `POST /bitrix/event` — предназначен для входящих событий Bitrix24
 
 ## DaData
 

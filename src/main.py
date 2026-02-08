@@ -116,14 +116,8 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check для мониторинга"""
-    return {
-        "status": "healthy",
-        "has_telegram_token": bool(settings.telegram_bot_token),
-        "has_dadata_key": bool(settings.dadata_api_key),
-        "has_openai_key": bool(settings.openai_api_key),
-        "has_bitrix_config": bool(settings.bitrix_domain and settings.bitrix_client_id)
-    }
+    """Health check для Docker HEALTHCHECK"""
+    return {"status": "ok"}
 
 
 @app.post("/webhook/telegram/{secret}")
@@ -170,11 +164,11 @@ async def telegram_webhook(secret: str, request: Request):
         return JSONResponse({"ok": False, "error": str(e)})
 
 
-@app.post("/webhook/bitrix")
-async def bitrix_webhook(request: Request):
+@app.post("/bitrix/event")
+async def bitrix_event(request: Request):
     """
-    Webhook endpoint для Bitrix24 (imbot events)
-    URL: POST /webhook/bitrix
+    Webhook endpoint для Bitrix24 событий
+    URL: POST /bitrix/event
     """
     try:
         # Получение тела запроса
@@ -204,8 +198,8 @@ async def bitrix_webhook(request: Request):
         return JSONResponse({"success": False, "error": str(e)})
 
 
-@app.get("/oauth/bitrix/start")
-async def start_bitrix_oauth():
+@app.get("/oauth/bitrix")
+async def bitrix_oauth():
     """
     Инициация OAuth процесса для Bitrix24
     Перенаправляет пользователя на страницу авторизации Bitrix24
