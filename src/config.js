@@ -63,27 +63,31 @@ function requireEnv(name) {
 function validateConfig() {
   const issues = [];
   const missingRequired = [];
+  const disabledModules = [];
+
   if (config.httpTimeoutSeconds <= 0) {
     issues.push('HTTP_TIMEOUT_SECONDS must be greater than 0');
   }
   if (config.dadataCount <= 0) {
     issues.push('DADATA_COUNT must be greater than 0');
   }
-  if (!config.telegramWebhookSecret) {
-    missingRequired.push('TELEGRAM_WEBHOOK_SECRET is not set');
+
+  if (config.telegramEnabled && !config.telegramAvailable) {
+    missingRequired.push('TELEGRAM_WEBHOOK_SECRET or TELEGRAM_BOT_TOKEN is not set');
+    disabledModules.push('telegram');
   }
-  if (!config.telegramBotToken) {
-    missingRequired.push('TELEGRAM_BOT_TOKEN is not set');
+
+  if (config.bitrixEnabled && !config.bitrixAvailable) {
+    missingRequired.push('BITRIX_CLIENT_ID or BITRIX_CLIENT_SECRET is not set');
+    disabledModules.push('bitrix');
   }
-  if (config.dadataEnabled) {
-    if (!readEnv('DADATA_API_KEY')) {
-      missingRequired.push('DADATA_API_KEY is not set');
-    }
-    if (!readEnv('DADATA_SECRET_KEY')) {
-      missingRequired.push('DADATA_SECRET_KEY is not set');
-    }
+
+  if (config.dadataEnabled && !config.dadataAvailable) {
+    missingRequired.push('DADATA_API_KEY or DADATA_SECRET_KEY is not set');
+    disabledModules.push('dadata');
   }
-  return { issues, missingRequired };
+
+  return { issues, missingRequired, disabledModules };
 }
 
 const config = {
@@ -92,10 +96,24 @@ const config = {
   dadataCount: parsePositiveInteger(readEnv('DADATA_COUNT'), DEFAULT_DADATA_COUNT),
   dadataEnabled: parseBoolean(readEnv('ENABLE_DADATA') ?? 'true'),
   dadataInnLengths: DADATA_INN_LENGTHS,
+  telegramEnabled: parseBoolean(readEnv('ENABLE_TELEGRAM') ?? 'true'),
+  bitrixEnabled: parseBoolean(readEnv('ENABLE_BITRIX') ?? 'true'),
   telegramWebhookSecret:
     readEnv('TELEGRAM_WEBHOOK_SECRET') ?? readEnv('TG_WEBHOOK_SECRET'),
   telegramBotToken: readEnv('TELEGRAM_BOT_TOKEN'),
+  bitrixClientId: readEnv('BITRIX_CLIENT_ID'),
+  bitrixClientSecret: readEnv('BITRIX_CLIENT_SECRET'),
 };
+
+config.telegramAvailable = Boolean(
+  config.telegramEnabled && config.telegramWebhookSecret && config.telegramBotToken,
+);
+config.bitrixAvailable = Boolean(
+  config.bitrixEnabled && config.bitrixClientId && config.bitrixClientSecret,
+);
+config.dadataAvailable = Boolean(
+  config.dadataEnabled && readEnv('DADATA_API_KEY') && readEnv('DADATA_SECRET_KEY'),
+);
 
 module.exports = {
   config,

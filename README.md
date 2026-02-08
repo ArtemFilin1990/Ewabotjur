@@ -7,14 +7,16 @@
 - npm
 - Переменные окружения:
   - `PORT` (по умолчанию 3000)
-  - `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET` для совместимости)
-  - `TELEGRAM_BOT_TOKEN`
-  - `BITRIX_CLIENT_ID`
-  - `BITRIX_CLIENT_SECRET`
-  - `DADATA_API_KEY`
-  - `DADATA_SECRET_KEY`
-  - `HTTP_TIMEOUT_SECONDS` (по умолчанию 10)
-  - `ENABLE_DADATA` (по умолчанию true)
+- `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET` для совместимости)
+- `TELEGRAM_BOT_TOKEN`
+- `BITRIX_CLIENT_ID`
+- `BITRIX_CLIENT_SECRET`
+- `DADATA_API_KEY`
+- `DADATA_SECRET_KEY`
+- `HTTP_TIMEOUT_SECONDS` (по умолчанию 10)
+- `ENABLE_TELEGRAM` (по умолчанию true)
+- `ENABLE_BITRIX` (по умолчанию true)
+- `ENABLE_DADATA` (по умолчанию true)
 
 ## Установка и запуск
 ```bash
@@ -29,9 +31,9 @@ npm run start
 - `GET /` — health-check, 200 OK
 - `GET /health` — health-check для Docker, возвращает `{"status": "ok"}`
 - `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`) и отвечает в чат через `TELEGRAM_BOT_TOKEN`
-- `POST /bitrix/event` — принимает события Bitrix24
-- `GET /oauth/bitrix` — инициация OAuth процесса для Bitrix24
-- `GET /oauth/bitrix/callback` — callback для OAuth Bitrix24
+- `GET /bitrix/install` — проверка готовности Bitrix24
+- `POST /bitrix/event` — принимает события Bitrix24 (alias для `/bitrix/handler`)
+- `POST /bitrix/handler` — принимает события Bitrix24
 
 ## Деплой в Amvera
 - Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
@@ -51,9 +53,8 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 Важно: `https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
 
 ## Bitrix24
-- `GET /oauth/bitrix` — инициация OAuth процесса для авторизации в Bitrix24
-- `GET /oauth/bitrix/callback` — callback endpoint для завершения OAuth
-- `POST /bitrix/event` — предназначен для входящих событий Bitrix24
+- `GET /bitrix/install` — проверка конфигурации (`BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
+- `POST /bitrix/event` — входящие события Bitrix24
 
 ## DaData
 

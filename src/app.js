@@ -9,16 +9,23 @@ const app = express();
 
 app.use(express.json());
 
-const { issues: configIssues, missingRequired } = validateConfig();
-if (configIssues.length > 0 || missingRequired.length > 0) {
+const { issues: configIssues, missingRequired, disabledModules } = validateConfig();
+if (configIssues.length > 0) {
   logWarn('Configuration validation issues', {
     operation: 'config.validation',
     result: 'warning',
-    issues: [...configIssues, ...missingRequired],
+    issues: configIssues,
   });
-  if (missingRequired.length > 0) {
-    throw new Error(`Missing required configuration: ${missingRequired.join(', ')}`);
-  }
+  throw new Error(`Invalid configuration: ${configIssues.join(', ')}`);
+}
+
+if (missingRequired.length > 0) {
+  logWarn('Configuration validation warnings', {
+    operation: 'config.validation',
+    result: 'warning',
+    issues: missingRequired,
+    disabledModules,
+  });
 } else {
   logInfo('Configuration validated', {
     operation: 'config.validation',
@@ -28,6 +35,10 @@ if (configIssues.length > 0 || missingRequired.length > 0) {
 
 app.get('/', (_req, res) => {
   res.status(200).send('OK');
+});
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 app.use('/webhook/telegram', telegramRouter);
