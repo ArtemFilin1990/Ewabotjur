@@ -2,6 +2,8 @@
 
 ## Обязательные переменные
 
+> Переменные, заданные через интерфейс Amvera, доступны **только на рантайме**. На этапе сборки их нет, поэтому все операции, которым нужны токены/ключи, должны выполняться после старта контейнера.
+
 ### База данных PostgreSQL
 ```
 DATABASE_URL=postgresql+asyncpg://<username>:<password>@<host>:5432/<database>
@@ -14,7 +16,7 @@ DATABASE_URL=postgresql+asyncpg://<username>:<password>@<host>:5432/<database>
 ### Конфигурация приложения
 ```
 PORT=3000
-APP_URL=https://<your-domain>.amvera.ru
+APP_URL=https://<your-domain>.amvera.io
 LOG_LEVEL=info
 ```
 
@@ -50,7 +52,7 @@ OPENAI_API_KEY=<your-openai-api-key>
 BITRIX_DOMAIN=<your-domain>.bitrix24.ru
 BITRIX_CLIENT_ID=<your-client-id>
 BITRIX_CLIENT_SECRET=<your-client-secret>
-BITRIX_REDIRECT_URL=https://<your-domain>.amvera.ru/oauth/bitrix/callback
+BITRIX_REDIRECT_URL=https://<your-domain>.amvera.io/oauth/bitrix/callback
 ```
 **Как получить:**
 - Зайдите в настройки вашего Bitrix24
@@ -85,7 +87,7 @@ MCP_API_KEY=<mcp-api-key>
 # === ОБЯЗАТЕЛЬНЫЕ ===
 DATABASE_URL=postgresql+asyncpg://<username>:<password>@postgres.amvera.io:5432/<database>
 PORT=3000
-APP_URL=https://<your-domain>.amvera.ru
+APP_URL=https://<your-domain>.amvera.io
 LOG_LEVEL=info
 
 # Telegram
@@ -103,7 +105,7 @@ OPENAI_API_KEY=sk-proj-<your-openai-key>
 BITRIX_DOMAIN=<your-company>.bitrix24.ru
 BITRIX_CLIENT_ID=local.<your-client-id>
 BITRIX_CLIENT_SECRET=<your-client-secret>
-BITRIX_REDIRECT_URL=https://<your-domain>.amvera.ru/oauth/bitrix/callback
+BITRIX_REDIRECT_URL=https://<your-domain>.amvera.io/oauth/bitrix/callback
 
 # === ОПЦИОНАЛЬНЫЕ ===
 OPENAI_MODEL=gpt-4
@@ -134,7 +136,7 @@ ENABLE_DADATA=true
 curl -X POST "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://<your-domain>.amvera.ru/webhook/telegram/<TG_WEBHOOK_SECRET>",
+    "url": "https://<your-domain>.amvera.io/webhook/telegram/<TG_WEBHOOK_SECRET>",
     "secret_token": "<TG_WEBHOOK_SECRET>"
   }'
 ```
@@ -146,13 +148,13 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 ### Первичная авторизация Bitrix24
 
-1. Откройте в браузере: `https://<your-domain>.amvera.ru/oauth/bitrix`
+1. Откройте в браузере: `https://<your-domain>.amvera.io/oauth/bitrix`
 2. Разрешите доступ приложению
 3. Токены будут автоматически сохранены в базе данных PostgreSQL
 
 ## Проверка работоспособности
 
-1. Health check: `curl https://<your-domain>.amvera.ru/health`
+1. Health check: `curl https://<your-domain>.amvera.io/health`
    - Ожидаемый ответ: `{"status": "ok"}`
 
 2. Отправьте ИНН боту в Telegram (например: `7707083893`)
