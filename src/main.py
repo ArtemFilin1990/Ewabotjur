@@ -14,6 +14,7 @@ from src.handlers.telegram_handler import handle_telegram_update
 from src.handlers.bitrix_handler import handle_bitrix_event
 from src.integrations.bitrix24.oauth import handle_oauth_callback, initiate_oauth, oauth_manager
 from src.utils.logging import configure_logging, reset_request_id, set_request_id
+from src.utils.http import close_http_client
 
 # Настройка логирования
 configure_logging(settings.log_level)
@@ -74,6 +75,10 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down Ewabotjur application", extra={"operation": "shutdown", "result": "success"})
+    
+    # Закрытие HTTP клиента
+    await close_http_client()
+    logger.info("HTTP client closed", extra={"operation": "shutdown", "result": "success"})
 
 
 # Создание FastAPI приложения

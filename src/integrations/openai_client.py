@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 import os
 
 from src.config import settings
+from src.utils.http import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -84,34 +85,35 @@ class OpenAIClient:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{self.BASE_URL}/chat/completions",
-                    json=payload,
-                    headers=self.headers
+            client = get_http_client()
+            response = await client.post(
+                f"{self.BASE_URL}/chat/completions",
+                json=payload,
+                headers=self.headers,
+                timeout=60.0
+            )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            # Извлечение ответа
+            if data.get("choices") and len(data["choices"]) > 0:
+                content = data["choices"][0]["message"]["content"]
+                logger.info(
+                    "GPT analysis completed",
+                    extra={
+                        "operation": "openai.analyze",
+                        "result": "success",
+                        "inn": company_data.get("inn"),
+                    },
                 )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                # Извлечение ответа
-                if data.get("choices") and len(data["choices"]) > 0:
-                    content = data["choices"][0]["message"]["content"]
-                    logger.info(
-                        "GPT analysis completed",
-                        extra={
-                            "operation": "openai.analyze",
-                            "result": "success",
-                            "inn": company_data.get("inn"),
-                        },
-                    )
-                    return content
-                else:
-                    logger.error(
-                        "No choices in GPT response",
-                        extra={"operation": "openai.analyze", "result": "error"},
-                    )
-                    return "⚠️ Ошибка: не получен ответ от GPT. Попробуйте позже."
+                return content
+            else:
+                logger.error(
+                    "No choices in GPT response",
+                    extra={"operation": "openai.analyze", "result": "error"},
+                )
+                return "⚠️ Ошибка: не получен ответ от GPT. Попробуйте позже."
 
         except httpx.HTTPStatusError as e:
             logger.error(
