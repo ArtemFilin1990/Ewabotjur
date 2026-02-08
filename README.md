@@ -65,4 +65,4 @@ curl -X POST https://<YOUR_DOMAIN>/api/dadata/party \
 ```
 
 ## Тесты
-Отдельные тесты не настроены. Скрипт `npm test` возвращает успешный статус-заглушку.
+`npm test` запускает unit-тесты на встроенном `node:test` (файлы `tests/*.test.js`).
