@@ -14,7 +14,9 @@
 - `DADATA_API_KEY`
 - `DADATA_SECRET_KEY`
 - `HTTP_TIMEOUT_SECONDS` (по умолчанию 10)
+- `LOG_LEVEL` (info, warn, error; по умолчанию info)
 - `ENABLE_TELEGRAM` (по умолчанию true)
+- `ENABLE_TELEGRAM_INSECURE` (по умолчанию false; разрешить работу без секрета)
 - `ENABLE_BITRIX` (по умолчанию true)
 - `ENABLE_DADATA` (по умолчанию true)
 
@@ -30,7 +32,7 @@ npm run start
 ## Эндпоинты
 - `GET /` — health-check, 200 OK
 - `GET /health` — health-check для Docker, возвращает `{"status": "ok"}`
-- `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`) и отвечает в чат через `TELEGRAM_BOT_TOKEN`
+- `POST /webhook/telegram` и `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`), поддерживает `secret_token` Telegram, отвечает в чат через `TELEGRAM_BOT_TOKEN`
 - `GET /bitrix/install` — проверка готовности Bitrix24
 - `POST /bitrix/event` — принимает события Bitrix24 (alias для `/bitrix/handler`)
 - `POST /bitrix/handler` — принимает события Bitrix24
@@ -43,6 +45,13 @@ npm run start
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -d "url=https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+Вариант с `secret_token` (без секрета в URL):
+```bash
+curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
+  -d "url=https://<your-app>.amvera.app/webhook/telegram" \
+  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
 Проверка статуса webhook (метод Telegram API, а не путь вашего сервера):
