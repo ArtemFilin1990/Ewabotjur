@@ -2,7 +2,7 @@
 Обработчик сообщений от Telegram
 """
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 import httpx
 
 from src.config import settings
@@ -12,41 +12,25 @@ from src.integrations.openai_client import openai_client
 
 logger = logging.getLogger(__name__)
 
+# Глобальный клиент для переиспользования соединений
+http_client = httpx.AsyncClient(timeout=30.0)
+
 
 async def handle_telegram_update(update: Dict[str, Any]) -> None:
-    """
-    Обработка входящего update от Telegram
-    
-    Args:
-        update: Данные update от Telegram
-    """
-    # Извлечение сообщения
+    """Обработка входящего update от Telegram"""
     message = update.get("message")
     
     if not message:
-        logger.debug(
-            "Update does not contain a message",
-            extra={"operation": "telegram.update", "result": "ignored"},
-        )
         return
     
-    # Извлечение данных из сообщения
     chat_id = message.get("chat", {}).get("id")
     text = message.get("text", "")
 
     if not chat_id:
-        logger.warning(
-            "No chat_id in message",
-            extra={"operation": "telegram.message", "result": "invalid"},
-        )
         return
 
-    # Ограничение длины входящего текста для защиты от атак
+    # Ограничение длины входящего текста
     if len(text) > 1000:
-        logger.warning(
-            "Message too long",
-            extra={"operation": "telegram.message", "result": "rejected", "length": len(text)},
-        )
         await send_telegram_message(
             chat_id,
             "❌ Сообщение слишком длинное. Пожалуйста, отправьте ИНН (10 или 12 цифр)."
@@ -63,7 +47,6 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
         },
     )
     
-    # Команды
     if text.startswith("/start"):
         await send_telegram_message(
             chat_id,
@@ -88,7 +71,6 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
         )
         return
     
-    # Парсинг ИНН из текста
     inn = extract_inn(text)
     
     if not inn:
@@ -100,7 +82,6 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
         )
         return
     
-    # Валидация ИНН
     if not validate_inn(inn):
         await send_telegram_message(
             chat_id,
@@ -109,14 +90,12 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
         )
         return
     
-    # Отправка уведомления о начале обработки
     await send_telegram_message(
         chat_id,
         f"🔍 Ищу информацию по ИНН {inn}...\nПожалуйста, подождите."
     )
     
     try:
-        # Получение данных из DaData
         company_data = await dadata_client.find_by_inn(inn)
         
         if not company_data:
@@ -127,13 +106,9 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
             )
             return
         
-        # Анализ с помощью GPT
         analysis = await openai_client.analyze_company(company_data)
-        
-        # Формирование ответа
         response = _format_response(company_data, analysis)
         
-        # Отправка результата (может потребоваться разбить на несколько сообщений)
         await send_telegram_message(chat_id, response)
     
     except Exception as e:
@@ -150,22 +125,8 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
 
 
 def _format_response(company_data: Dict[str, Any], analysis: str) -> str:
-    """
-    Форматирование ответа для отправки пользователю
-    
-    Args:
-        company_data: Данные компании из DaData
-        analysis: Анализ от GPT
-        
-    Returns:
-        Отформатированный текст
-    """
     parts = []
-    
-    # Заголовок
     parts.append("📊 **ИНФОРМАЦИЯ О КОМПАНИИ**\n")
-    
-    # Основные данные
     parts.append(f"**ИНН:** {company_data.get('inn', 'не указан')}")
     parts.append(f"**КПП:** {company_data.get('kpp', 'не указан')}")
     parts.append(f"**ОГРН:** {company_data.get('ogrn', 'не указан')}")
@@ -177,35 +138,49 @@ def _format_response(company_data: Dict[str, Any], analysis: str) -> str:
         parts.append(f"**Статус:** {company_data['state'].get('status', 'не указан')}")
     
     parts.append("\n" + "="*40 + "\n")
-    
-    # Анализ от GPT
     parts.append(analysis)
     
     return "\n".join(parts)
 
 
+def _smart_split_message(text: str, max_length: int = 4000) -> List[str]:
+    """Разбивает сообщение, стараясь не разрывать строки."""
+    if len(text) <= max_length:
+        return [text]
+        
+    parts = []
+    while text:
+        if len(text) <= max_length:
+            parts.append(text)
+            break
+            
+        # Ищем ближайший перенос строки перед лимитом
+        split_index = text.rfind('\n', 0, max_length)
+        if split_index == -1:
+            # Если нет переносов, ищем пробел
+            split_index = text.rfind(' ', 0, max_length)
+        
+        if split_index == -1:
+            # Если нет ни пробелов, ни переносов, режем жестко
+            split_index = max_length
+            
+        parts.append(text[:split_index])
+        text = text[split_index:].lstrip()
+        
+    return parts
+
+
 async def send_telegram_message(chat_id: int, text: str) -> None:
-    """
-    Отправка сообщения в Telegram
-    
-    Args:
-        chat_id: ID чата
-        text: Текст сообщения
-    """
+    """Отправка сообщения в Telegram с поддержкой длинных текстов."""
     url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
     
-    # Ограничение длины сообщения (Telegram лимит 4096 символов)
-    if len(text) > 4000:
-        # Разбиваем на части
-        parts = [text[i:i+4000] for i in range(0, len(text), 4000)]
-        for part in parts:
-            await _send_single_message(url, chat_id, part)
-    else:
-        await _send_single_message(url, chat_id, text)
+    parts = _smart_split_message(text)
+    
+    for part in parts:
+        await _send_single_message(url, chat_id, part)
 
 
 async def _send_single_message(url: str, chat_id: int, text: str) -> None:
-    """Отправка одного сообщения"""
     payload = {
         "chat_id": chat_id,
         "text": text,
@@ -213,14 +188,14 @@ async def _send_single_message(url: str, chat_id: int, text: str) -> None:
     }
     
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
-            logger.info(
-                "Message sent to Telegram chat",
-                extra={"operation": "telegram.send", "result": "success", "user_id": chat_id},
-            )
-    except Exception as e:
+        # Используем глобальный клиент
+        response = await http_client.post(url, json=payload)
+        response.raise_for_status()
+        logger.info(
+            "Message sent to Telegram chat",
+            extra={"operation": "telegram.send", "result": "success", "user_id": chat_id},
+        )
+    except Exception:
         logger.error(
             "Error sending Telegram message",
             extra={"operation": "telegram.send", "result": "error", "user_id": chat_id},
