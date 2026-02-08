@@ -49,12 +49,12 @@ python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
 1. Укажите `amvera.yml` с Python-окружением.
 2. Добавьте переменные окружения в UI Amvera.
 3. Убедитесь, что доступна PostgreSQL и задан `DATABASE_URL`.
-4. После деплоя откройте `https://<ваш_домен>/oauth/bitrix` для первичной авторизации.
+4. После деплоя откройте `https://<your-app>.amvera.io/oauth/bitrix` для первичной авторизации.
 
 ## Настройка Telegram webhook
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
-  -d "url=https://<ваш_домен>/webhook/telegram/<TG_WEBHOOK_SECRET>"
+  -d "url=https://<your-app>.amvera.io/webhook/telegram/<TG_WEBHOOK_SECRET>"
 ```
 
 Проверка статуса webhook:

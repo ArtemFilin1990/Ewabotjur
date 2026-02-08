@@ -11,20 +11,11 @@
 
 ### 1. Инфраструктура для Amvera
 
-#### ✅ Dockerfile
-- Многоэтапная сборка (deps → runtime)
-- Python 3.11-slim образ
-- Запуск от non-root пользователя (безопасность)
-- Health check через httpx
-- Слушает PORT из переменной окружения
-- Оптимизирован для production
-
-#### ✅ amvera.yml
-```yaml
-toolchain: docker
-run:
-  containerPort: 3000
-```
+#### ✅ amvera.yml (Python + pip)
+- Python 3.11 окружение
+- Toolchain: pip с `requirements.txt`
+- Команда запуска: `python -m uvicorn src.main:app --host 0.0.0.0 --port 3000`
+- `containerPort: 3000`
 
 #### ✅ requirements.txt
 - FastAPI + Uvicorn
@@ -226,8 +217,7 @@ class BitrixAPIClient:
 
 ```
 Ewabotjur/
-├── Dockerfile                    # Docker образ для Amvera
-├── amvera.yml                   # Конфигурация Amvera
+├── amvera.yml                   # Конфигурация Amvera (Python 3.11 + pip)
 ├── requirements.txt             # Python зависимости
 ├── .env.example                 # Пример переменных окружения
 ├── .gitignore                   # Исключения для git
@@ -292,10 +282,9 @@ Ewabotjur/
    - Только `has_token: true/false`
    - Структурированный формат
 
-4. **Docker security**
-   - Non-root пользователь (uid 1000)
-   - Минимальный образ (alpine)
-   - Явные EXPOSE порты
+4. **Container security**
+   - Контейнеры управляются Amvera, запускаются под системным пользователем платформы
+   - HTTPS завершается на уровне платформы, отдельные EXPOSE порты не требуются
 
 5. **OAuth security**
    - HTTPS для всех запросов
@@ -345,7 +334,7 @@ $ curl http://localhost:3000/health
 2. **Создать приложение в Amvera**
    - GitHub repo: ArtemFilin1990/Ewabotjur
    - Branch: main
-   - Toolchain: Docker
+   - Toolchain: pip (Python 3.11)
 3. **Добавить переменные окружения** (см. .env.example)
 4. **Restart приложения**
 5. **Установить Telegram webhook**
@@ -367,13 +356,13 @@ OPENAI_API_KEY           # От platform.openai.com
 BITRIX_DOMAIN            # https://xxx.bitrix24.ru
 BITRIX_CLIENT_ID         # Из приложения Bitrix24
 BITRIX_CLIENT_SECRET     # Из приложения Bitrix24
-BITRIX_REDIRECT_URL      # https://app.amvera.app/oauth/bitrix/callback
+BITRIX_REDIRECT_URL      # https://app.amvera.io/oauth/bitrix/callback
 ```
 
 ### Опциональные:
 ```env
 PORT=3000
-APP_URL=https://app.amvera.app
+APP_URL=https://app.amvera.io
 LOG_LEVEL=INFO
 OPENAI_MODEL=gpt-4
 USE_MCP=false
@@ -385,7 +374,7 @@ USE_MCP=false
 
 ### 1. Хранение токенов Bitrix24
 - **Текущая реализация:** файл `storage/bitrix_tokens.json`
-- **Проблема:** В Docker контейнере токены теряются при рестарте
+- **Проблема:** В контейнере на Amvera токены теряются при рестарте
 - **Решения:**
   - Настроить persistent volume в Amvera
   - Использовать БД (PostgreSQL, Redis)
@@ -406,8 +395,7 @@ USE_MCP=false
 ### Из problem_statement:
 
 #### ✅ A) Развертывание на Amvera
-- [x] Dockerfile (многоэтапная сборка)
-- [x] amvera.yml (containerPort: 3000)
+- [x] Единый `amvera.yml` (Python 3.11, pip, containerPort: 3000)
 - [x] Приложение слушает process.env.PORT
 - [x] Переменные окружения через Amvera UI
 - [x] HTTPS автоматически
@@ -434,7 +422,7 @@ USE_MCP=false
 4. **Health check endpoint** - для мониторинга
 5. **Structured logging** - без секретов
 6. **Error handling** - graceful degradation
-7. **Docker optimization** - multi-stage build
+7. **Amvera config** - Python 3.11 + pip toolchain
 8. **Security best practices** - non-root user, env vars
 
 ---

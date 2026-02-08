@@ -88,6 +88,7 @@ data/
 # Allow application storage code
 !src/storage/
 !src/storage/**
+src/storage/**/__pycache__/
 
 # Data artifacts
 dumps/

@@ -36,7 +36,7 @@
 ### 1. Amvera Setup
 - [ ] Amvera account created
 - [ ] Repository connected
-- [ ] Docker build successful
+- [ ] Deployment via `amvera.yml` (Python runtime) succeeds
 - [ ] Application deployed
 
 ### 2. Environment Variables
@@ -62,7 +62,7 @@ Optional variables:
 #### Telegram
 - [ ] Bot created via @BotFather
 - [ ] Webhook configured: `POST https://api.telegram.org/bot<TOKEN>/setWebhook`
-- [ ] Webhook URL: `https://your-app.amvera.app/webhook/telegram/<SECRET>`
+- [ ] Webhook URL: `https://your-app.amvera.io/webhook/telegram/<SECRET>`
 - [ ] Webhook verified: `getWebhookInfo` shows correct URL
 - [ ] Test message sent and received
 
@@ -139,7 +139,7 @@ Optional variables:
 
 ### Bitrix24 Tokens
 **CRITICAL:** Bitrix24 OAuth tokens are stored in `storage/bitrix_tokens.json`
-- Docker containers are ephemeral - tokens will be lost on restart!
+- Containers on Amvera are ephemeral — tokens will be lost on restart!
 - **Solutions:**
   1. Configure persistent volume in Amvera for `/app/storage`
   2. Use external storage (PostgreSQL, Redis)
@@ -229,7 +229,7 @@ Optional variables:
 
 ## 📞 Support Contacts
 
-- Amvera Support: https://amvera.ru/support
+- Amvera Support: https://amvera.io/support
 - GitHub Issues: https://github.com/ArtemFilin1990/Ewabotjur/issues
 
 ## ✅ Deployment Sign-off

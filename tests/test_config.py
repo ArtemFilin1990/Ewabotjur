@@ -33,23 +33,23 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(settings.openai_model, "gpt-4")
     
     @patch.dict(os.environ, {
-        "APP_URL": "https://test.amvera.app",
+        "APP_URL": "https://test.amvera.io",
         "TG_WEBHOOK_SECRET": "secret123",
     }, clear=True)
     def test_telegram_webhook_url(self):
         """Тест формирования URL для Telegram webhook"""
         settings = Settings()
-        expected = "https://test.amvera.app/webhook/telegram/secret123"
+        expected = "https://test.amvera.io/webhook/telegram/secret123"
         self.assertEqual(settings.telegram_webhook_url, expected)
 
     @patch.dict(os.environ, {
-        "APP_URL": "https://test.amvera.app",
+        "APP_URL": "https://test.amvera.io",
         "TELEGRAM_WEBHOOK_SECRET": "telegram_secret",
     })
     def test_telegram_webhook_url_from_telegram_secret(self):
         """Тест формирования URL когда используется TELEGRAM_WEBHOOK_SECRET"""
         settings = Settings()
-        expected = "https://test.amvera.app/webhook/telegram/telegram_secret"
+        expected = "https://test.amvera.io/webhook/telegram/telegram_secret"
         self.assertEqual(settings.telegram_webhook_url, expected)
 
     @patch.dict(os.environ, {
