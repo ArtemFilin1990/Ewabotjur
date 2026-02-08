@@ -4,6 +4,9 @@
 import re
 from typing import Optional, List
 
+# Pre-compiled pattern for extracting INN (10 or 12 digits surrounded by word boundaries)
+_INN_PATTERN = re.compile(r'\b\d{10}\b|\b\d{12}\b')
+
 
 def extract_inn(text: str) -> Optional[str]:
     """
@@ -19,20 +22,9 @@ def extract_inn(text: str) -> Optional[str]:
     Returns:
         Первый найденный ИНН или None
     """
-    # Паттерн для поиска ИНН (10 или 12 цифр)
-    # Ищем последовательность цифр, окруженную границами слов
-    pattern = r'\b\d{10}\b|\b\d{12}\b'
-    
-    matches = re.findall(pattern, text)
-    
-    if matches:
-        # Возвращаем первый найденный ИНН
-        inn = matches[0]
-        
-        # Базовая валидация (проверка контрольной суммы можно добавить)
-        if len(inn) in [10, 12]:
-            return inn
-    
+    match = _INN_PATTERN.search(text)
+    if match:
+        return match.group()
     return None
 
 
@@ -46,11 +38,7 @@ def extract_all_inns(text: str) -> List[str]:
     Returns:
         Список найденных ИНН
     """
-    pattern = r'\b\d{10}\b|\b\d{12}\b'
-    matches = re.findall(pattern, text)
-    
-    # Фильтрация по длине
-    return [inn for inn in matches if len(inn) in [10, 12]]
+    return _INN_PATTERN.findall(text)
 
 
 def validate_inn(inn: str) -> bool:
