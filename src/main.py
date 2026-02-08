@@ -118,11 +118,13 @@ async def root():
 async def health_check():
     """Health check для мониторинга"""
     return {
-        "status": "healthy",
-        "has_telegram_token": bool(settings.telegram_bot_token),
-        "has_dadata_key": bool(settings.dadata_api_key),
-        "has_openai_key": bool(settings.openai_api_key),
-        "has_bitrix_config": bool(settings.bitrix_domain and settings.bitrix_client_id)
+        "status": "ok",
+        "checks": {
+            "has_telegram_token": bool(settings.telegram_bot_token),
+            "has_dadata_key": bool(settings.dadata_api_key),
+            "has_openai_key": bool(settings.openai_api_key),
+            "has_bitrix_config": bool(settings.bitrix_domain and settings.bitrix_client_id),
+        },
     }
 
 
@@ -170,16 +172,27 @@ async def telegram_webhook(secret: str, request: Request):
         return JSONResponse({"ok": False, "error": str(e)})
 
 
-@app.post("/webhook/bitrix")
-async def bitrix_webhook(request: Request):
+async def _parse_bitrix_payload(request: Request) -> dict:
+    """Получает payload Bitrix24 из form-data или JSON."""
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        payload = await request.json()
+        if isinstance(payload, dict):
+            return payload
+        return {"payload": payload}
+
+    event_data = await request.form()
+    return dict(event_data)
+
+
+async def _handle_bitrix_request(request: Request) -> JSONResponse:
     """
     Webhook endpoint для Bitrix24 (imbot events)
     URL: POST /webhook/bitrix
     """
     try:
         # Получение тела запроса
-        event_data = await request.form()
-        event_dict = dict(event_data)
+        event_dict = await _parse_bitrix_payload(request)
         
         logger.info(
             "Received Bitrix event",
@@ -204,8 +217,25 @@ async def bitrix_webhook(request: Request):
         return JSONResponse({"success": False, "error": str(e)})
 
 
-@app.get("/oauth/bitrix/start")
-async def start_bitrix_oauth():
+@app.post("/webhook/bitrix")
+async def bitrix_webhook(request: Request):
+    """
+    Webhook endpoint для Bitrix24 (imbot events)
+    URL: POST /webhook/bitrix
+    """
+    return await _handle_bitrix_request(request)
+
+
+@app.post("/bitrix/event")
+async def bitrix_event(request: Request):
+    """
+    Альтернативный webhook endpoint для Bitrix24
+    URL: POST /bitrix/event
+    """
+    return await _handle_bitrix_request(request)
+
+
+async def _start_bitrix_oauth() -> dict:
     """
     Инициация OAuth процесса для Bitrix24
     Перенаправляет пользователя на страницу авторизации Bitrix24
@@ -226,6 +256,18 @@ async def start_bitrix_oauth():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"OAuth initiation failed: {str(e)}"
         )
+
+
+@app.get("/oauth/bitrix")
+async def start_bitrix_oauth():
+    """Инициация OAuth процесса для Bitrix24 (короткий маршрут)."""
+    return await _start_bitrix_oauth()
+
+
+@app.get("/oauth/bitrix/start")
+async def start_bitrix_oauth_legacy():
+    """Инициация OAuth процесса для Bitrix24 (legacy маршрут)."""
+    return await _start_bitrix_oauth()
 
 
 @app.get("/oauth/bitrix/callback")
