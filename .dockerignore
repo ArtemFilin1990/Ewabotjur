@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+node_modules/
+tests/
+*.md
+prompts/
+.pytest_cache/
+.amveraignore

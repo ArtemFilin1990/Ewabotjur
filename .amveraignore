@@ -1,5 +1,13 @@
 # Ignore local dependencies and secrets to keep Amvera archives clean
 node_modules/
+venv/
+.venv/
+.git/
 .env
 .env.*
 !.env.example
+__pycache__/
+.pytest_cache/
+tests/
+*.md
+prompts/
