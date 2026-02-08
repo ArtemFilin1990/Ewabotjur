@@ -10,7 +10,7 @@ const router = express.Router();
  * @param {import('express').Response} res
  * @returns {Promise<void>}
  */
-router.post('/:secret', async (req, res) => {
+router.post(['/', '/:secret'], async (req, res) => {
   if (!config.telegramAvailable) {
     logWarn('Telegram webhook is disabled', {
       operation: 'telegram.webhook',
@@ -20,9 +20,20 @@ router.post('/:secret', async (req, res) => {
   }
 
   const { secret } = req.params;
+  const headerSecret = req.get('x-telegram-bot-api-secret-token');
+  const providedSecret = headerSecret || secret;
 
-  if (!config.telegramWebhookSecret || secret !== config.telegramWebhookSecret) {
+  if (config.telegramWebhookSecret) {
+    if (providedSecret !== config.telegramWebhookSecret) {
+      return res.status(401).json({ ok: false, error: 'Unauthorized' });
+    }
+  } else if (!config.telegramAllowInsecure) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  } else {
+    logWarn('Telegram webhook secret is not configured', {
+      operation: 'telegram.webhook',
+      result: 'insecure',
+    });
   }
 
   const update = req.body || {};

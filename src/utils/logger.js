@@ -1,7 +1,15 @@
+const { config } = require('../config');
+
 const LEVELS = {
   info: 'info',
   warn: 'warn',
   error: 'error',
+};
+
+const LEVEL_PRIORITY = {
+  [LEVELS.error]: 0,
+  [LEVELS.warn]: 1,
+  [LEVELS.info]: 2,
 };
 
 /**
@@ -25,6 +33,11 @@ function buildPayload(level, message, meta = {}) {
  * @param {Record<string, unknown>} [meta]
  */
 function log(level, message, meta) {
+  const currentLevel = LEVEL_PRIORITY[config.logLevel] ?? LEVEL_PRIORITY.info;
+  const nextLevel = LEVEL_PRIORITY[level] ?? LEVEL_PRIORITY.info;
+  if (nextLevel > currentLevel) {
+    return;
+  }
   const payload = buildPayload(level, message, meta);
   const line = JSON.stringify(payload);
   if (level === LEVELS.error) {

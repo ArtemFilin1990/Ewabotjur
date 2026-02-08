@@ -1,6 +1,7 @@
 const DEFAULT_HTTP_TIMEOUT_SECONDS = 10;
 const DEFAULT_DADATA_COUNT = 1;
 const DADATA_INN_LENGTHS = [10, 12];
+const SUPPORTED_LOG_LEVELS = new Set(['info', 'warn', 'error']);
 
 /**
  * @param {string} value
@@ -65,6 +66,10 @@ function validateConfig() {
   const missingRequired = [];
   const disabledModules = [];
 
+  if (!SUPPORTED_LOG_LEVELS.has(config.logLevel)) {
+    issues.push('LOG_LEVEL must be one of info, warn, error');
+  }
+
   if (config.httpTimeoutSeconds <= 0) {
     issues.push('HTTP_TIMEOUT_SECONDS must be greater than 0');
   }
@@ -73,7 +78,9 @@ function validateConfig() {
   }
 
   if (config.telegramEnabled && !config.telegramAvailable) {
-    missingRequired.push('TELEGRAM_WEBHOOK_SECRET or TELEGRAM_BOT_TOKEN is not set');
+    missingRequired.push(
+      'TELEGRAM_BOT_TOKEN is not set or TELEGRAM_WEBHOOK_SECRET is missing without ENABLE_TELEGRAM_INSECURE',
+    );
     disabledModules.push('telegram');
   }
 
@@ -96,7 +103,9 @@ const config = {
   dadataCount: parsePositiveInteger(readEnv('DADATA_COUNT'), DEFAULT_DADATA_COUNT),
   dadataEnabled: parseBoolean(readEnv('ENABLE_DADATA') ?? 'true'),
   dadataInnLengths: DADATA_INN_LENGTHS,
+  logLevel: readEnv('LOG_LEVEL') ?? 'info',
   telegramEnabled: parseBoolean(readEnv('ENABLE_TELEGRAM') ?? 'true'),
+  telegramAllowInsecure: parseBoolean(readEnv('ENABLE_TELEGRAM_INSECURE') ?? 'false'),
   bitrixEnabled: parseBoolean(readEnv('ENABLE_BITRIX') ?? 'true'),
   telegramWebhookSecret:
     readEnv('TELEGRAM_WEBHOOK_SECRET') ?? readEnv('TG_WEBHOOK_SECRET'),
@@ -106,7 +115,9 @@ const config = {
 };
 
 config.telegramAvailable = Boolean(
-  config.telegramEnabled && config.telegramWebhookSecret && config.telegramBotToken,
+  config.telegramEnabled &&
+    config.telegramBotToken &&
+    (config.telegramWebhookSecret || config.telegramAllowInsecure),
 );
 config.bitrixAvailable = Boolean(
   config.bitrixEnabled && config.bitrixClientId && config.bitrixClientSecret,

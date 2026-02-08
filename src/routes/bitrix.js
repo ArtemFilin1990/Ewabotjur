@@ -34,6 +34,28 @@ function handleBitrixEvent(req, res) {
   return res.status(200).json({ ok: true, received: payload });
 }
 
+/**
+ * @param {import('express').Request} _req
+ * @param {import('express').Response} res
+ */
+function handleBitrixStatus(_req, res) {
+  if (!config.bitrixAvailable) {
+    return res.status(503).json({
+      ok: false,
+      status: 'disabled',
+      enabled: config.bitrixEnabled,
+    });
+  }
+
+  return res.status(200).json({
+    ok: true,
+    status: 'ready',
+    enabled: config.bitrixEnabled,
+  });
+}
+
+router.get('/handler', handleBitrixStatus);
+router.get('/event', handleBitrixStatus);
 router.post('/handler', handleBitrixEvent);
 router.post('/event', handleBitrixEvent);
 
