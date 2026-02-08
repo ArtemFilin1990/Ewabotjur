@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     bitrix_client_id: str = Field(default="", validation_alias="BITRIX_CLIENT_ID")
     bitrix_client_secret: str = Field(default="", validation_alias="BITRIX_CLIENT_SECRET")
     bitrix_redirect_url: str = Field(default="", validation_alias="BITRIX_REDIRECT_URL")
+
+    # Database
+    database_url: str = Field(default="", validation_alias="DATABASE_URL")
     
     # MCP (опционально)
     use_mcp: bool = Field(default=False, validation_alias="USE_MCP")
@@ -69,6 +72,8 @@ class Settings(BaseSettings):
             missing.append("BITRIX_CLIENT_SECRET")
         if not self.bitrix_redirect_url:
             missing.append("BITRIX_REDIRECT_URL")
+        if not self.database_url:
+            missing.append("DATABASE_URL")
         
         return missing
     

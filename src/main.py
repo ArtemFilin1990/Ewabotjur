@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from src.config import settings
 from src.handlers.telegram_handler import handle_telegram_update
 from src.handlers.bitrix_handler import handle_bitrix_event
-from src.integrations.bitrix24.oauth import handle_oauth_callback, initiate_oauth
+from src.integrations.bitrix24.oauth import handle_oauth_callback, initiate_oauth, oauth_manager
 from src.utils.logging import configure_logging, reset_request_id, set_request_id
 
 # Настройка логирования
@@ -50,6 +50,25 @@ async def lifespan(app: FastAPI):
             "All required environment variables are set",
             extra={"operation": "config.validation", "result": "success"},
         )
+
+    try:
+        await oauth_manager.ensure_storage_ready()
+        logger.info(
+            "Bitrix token storage ready",
+            extra={"operation": "bitrix.storage", "result": "success"},
+        )
+    except RuntimeError:
+        logger.warning(
+            "Database is not configured; Bitrix OAuth will be unavailable",
+            extra={"operation": "bitrix.storage", "result": "warning"},
+        )
+    except Exception:
+        logger.error(
+            "Failed to initialize Bitrix token storage",
+            extra={"operation": "bitrix.storage", "result": "error"},
+            exc_info=True,
+        )
+        raise
     
     yield
     
@@ -173,7 +192,7 @@ async def bitrix_event(request: Request):
     try:
         # Получение тела запроса
         event_data = await request.form()
-        event_dict = dict(event_data)
+        event_dict = _parse_bitrix_form(event_data)
         
         logger.info(
             "Received Bitrix event",
@@ -196,6 +215,50 @@ async def bitrix_event(request: Request):
             exc_info=True,
         )
         return JSONResponse({"success": False, "error": str(e)})
+
+
+def _parse_bitrix_form(form_data) -> dict:
+    """Convert Bitrix form data keys (data[PARAMS][MESSAGE]) into nested dict."""
+    event_dict: dict = {}
+    for key, value in form_data.items():
+        parts = _split_bracket_key(key)
+        if not parts:
+            continue
+        current = event_dict
+        for part in parts[:-1]:
+            if part not in current or not isinstance(current[part], dict):
+                current[part] = {}
+            current = current[part]
+        current[parts[-1]] = value
+    return event_dict
+
+
+def _split_bracket_key(key: str) -> list[str]:
+    if "[" not in key:
+        return [key]
+
+    parts: list[str] = []
+    buffer = ""
+    i = 0
+    while i < len(key):
+        char = key[i]
+        if char == "[":
+            if buffer:
+                parts.append(buffer)
+                buffer = ""
+            i += 1
+            inner = ""
+            while i < len(key) and key[i] != "]":
+                inner += key[i]
+                i += 1
+            if inner:
+                parts.append(inner)
+        else:
+            buffer += char
+        i += 1
+    if buffer:
+        parts.append(buffer)
+    return parts
 
 
 @app.get("/oauth/bitrix")

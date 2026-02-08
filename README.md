@@ -1,81 +1,68 @@
-# Ewabotjur (Node.js)
+# Ewabotjur (FastAPI)
 
-Минимальный Express-сервер для Telegram webhook и локального приложения Bitrix24. Готов к деплою на Amvera (node + npm).
+Telegram + Bitrix24 бот для анализа контрагентов по ИНН с использованием DaData и OpenAI.
 
 ## Требования
-- Node.js 18+
-- npm
-- Переменные окружения:
-  - `PORT` (по умолчанию 3000)
-- `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET` для совместимости)
+- Python 3.11+
+- PostgreSQL (для хранения OAuth токенов Bitrix24)
+
+## Переменные окружения
+Обязательные:
+- `PORT` (по умолчанию 3000)
+- `APP_URL`
+- `LOG_LEVEL`
 - `TELEGRAM_BOT_TOKEN`
-- `BITRIX_CLIENT_ID`
-- `BITRIX_CLIENT_SECRET`
+- `TG_WEBHOOK_SECRET` (или `TELEGRAM_WEBHOOK_SECRET`)
 - `DADATA_API_KEY`
 - `DADATA_SECRET_KEY`
-- `HTTP_TIMEOUT_SECONDS` (по умолчанию 10)
-- `LOG_LEVEL` (info, warn, error; по умолчанию info)
-- `ENABLE_TELEGRAM` (по умолчанию true)
-- `ENABLE_TELEGRAM_INSECURE` (по умолчанию false; разрешить работу без секрета)
-- `ENABLE_BITRIX` (по умолчанию true)
-- `ENABLE_DADATA` (по умолчанию true)
+- `OPENAI_API_KEY`
+- `BITRIX_DOMAIN`
+- `BITRIX_CLIENT_ID`
+- `BITRIX_CLIENT_SECRET`
+- `BITRIX_REDIRECT_URL`
+- `DATABASE_URL` (формат: `postgresql+asyncpg://user:pass@host:port/dbname`)
+
+Опциональные:
+- `OPENAI_MODEL`
+- `USE_MCP`
+- `MCP_SERVER_URL`
+- `MCP_API_KEY`
 
 ## Установка и запуск
 ```bash
-npm install
-cp .env.example .env
-# заполните .env
-npm run start
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export DATABASE_URL="postgresql+asyncpg://user:pass@host:5432/dbname"
+python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
 ```
-Сервер слушает `process.env.PORT || 3000`.
 
 ## Эндпоинты
-- `GET /` — health-check, 200 OK
-- `GET /health` — health-check для Docker, возвращает `{"status": "ok"}`
-- `POST /webhook/telegram` и `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`), поддерживает `secret_token` Telegram, отвечает в чат через `TELEGRAM_BOT_TOKEN`
-- `GET /bitrix/install` — проверка готовности Bitrix24
-- `POST /bitrix/event` — принимает события Bitrix24 (alias для `/bitrix/handler`)
-- `POST /bitrix/handler` — принимает события Bitrix24
+- `GET /` — базовый статус
+- `GET /health` — health check
+- `POST /webhook/telegram/{secret}` — webhook для Telegram
+- `POST /bitrix/event` — события Bitrix24
+- `GET /oauth/bitrix` — старт OAuth Bitrix24
+- `GET /oauth/bitrix/callback` — callback OAuth Bitrix24
 
-## Деплой в Amvera
-- Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
-- Установите переменные окружения через UI Amvera (`PORT`, `TELEGRAM_WEBHOOK_SECRET` или `TG_WEBHOOK_SECRET`, `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
-- Публичный домен приложения: `evacorebot-artem1990.amvera.io` (внутренний `amvera.app` не используем снаружи)
+## Деплой на Amvera
+1. Укажите `amvera.yml` с Python-окружением.
+2. Добавьте переменные окружения в UI Amvera.
+3. Убедитесь, что доступна PostgreSQL и задан `DATABASE_URL`.
+4. После деплоя откройте `https://<ваш_домен>/oauth/bitrix` для первичной авторизации.
 
 ## Настройка Telegram webhook
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
-  -d "url=https://evacorebot-artem1990.amvera.io/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>"
+  -d "url=https://<ваш_домен>/webhook/telegram/<TG_WEBHOOK_SECRET>"
 ```
 
-Вариант с `secret_token` (без секрета в URL):
-```bash
-curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
-  -d "url=https://evacorebot-artem1990.amvera.io/webhook/telegram" \
-  -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
-```
-
-Проверка статуса webhook (метод Telegram API, а не путь вашего сервера):
+Проверка статуса webhook:
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 ```
 
-Важно: `https://evacorebot-artem1990.amvera.io/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
-
-## Bitrix24
-- `GET /bitrix/install` — проверка конфигурации (`BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
-- `POST /bitrix/event` — входящие события Bitrix24
-
-## DaData
-
-Для работы эндпоинта `/api/dadata/party` нужны `DADATA_API_KEY` и `DADATA_SECRET_KEY`.
-
-Пример запроса:
-```bash
-curl -X POST https://<YOUR_DOMAIN>/api/dadata/party \
-  -H "Content-Type: application/json" \
-  -d '{"inn":"3525405517"}'
-```
-
 ## Тесты
-`npm test` запускает unit-тесты на встроенном `node:test` (файлы `tests/*.test.js`).
+```bash
+pytest -q
+```

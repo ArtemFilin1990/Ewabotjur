@@ -15,7 +15,7 @@ class TestConfig(unittest.TestCase):
         "LOG_LEVEL": "DEBUG",
         "TELEGRAM_BOT_TOKEN": "test_token",
         "TG_WEBHOOK_SECRET": "test_secret",
-    })
+    }, clear=True)
     def test_settings_from_env(self):
         """Тест загрузки настроек из переменных окружения"""
         settings = Settings()
@@ -35,7 +35,7 @@ class TestConfig(unittest.TestCase):
     @patch.dict(os.environ, {
         "APP_URL": "https://test.amvera.app",
         "TG_WEBHOOK_SECRET": "secret123",
-    })
+    }, clear=True)
     def test_telegram_webhook_url(self):
         """Тест формирования URL для Telegram webhook"""
         settings = Settings()
@@ -62,6 +62,7 @@ class TestConfig(unittest.TestCase):
         "BITRIX_CLIENT_ID": "id",
         "BITRIX_CLIENT_SECRET": "secret",
         "BITRIX_REDIRECT_URL": "https://test.app/callback",
+        "DATABASE_URL": "postgresql+asyncpg://user:pass@localhost:5432/db",
     })
     def test_validate_required_all_present(self):
         """Тест валидации когда все переменные есть"""
