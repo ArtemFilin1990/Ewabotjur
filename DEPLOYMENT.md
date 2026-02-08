@@ -61,15 +61,15 @@ OPENAI_API_KEY=<ваш ключ OpenAI>
 BITRIX_DOMAIN=https://вашкомпания.bitrix24.ru
 BITRIX_CLIENT_ID=<Client ID из Bitrix24>
 BITRIX_CLIENT_SECRET=<Client Secret из Bitrix24>
-BITRIX_REDIRECT_URL=https://your-app.amvera.app/oauth/bitrix/callback
+BITRIX_REDIRECT_URL=https://evacorebot-artem1990.amvera.io/oauth/bitrix/callback
 
 # Опциональные
-APP_URL=https://your-app.amvera.app
+APP_URL=https://evacorebot-artem1990.amvera.io
 LOG_LEVEL=INFO
 OPENAI_MODEL=gpt-4
 ```
 
-**ВАЖНО:** Замените `your-app` на реальное имя вашего приложения в Amvera.
+**ВАЖНО:** Публичный домен: `evacorebot-artem1990.amvera.io`. Внутренний домен `*.amvera.app` не используется для внешних интеграций.
 
 ### 2.3 Перезапуск после настройки переменных
 
@@ -81,7 +81,7 @@ OPENAI_MODEL=gpt-4
 
 После успешного деплоя, ваше приложение доступно по адресу:
 ```
-https://your-app.amvera.app
+https://evacorebot-artem1990.amvera.io
 ```
 
 Установите webhook для Telegram:
@@ -90,13 +90,12 @@ https://your-app.amvera.app
 curl -X POST "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://your-app.amvera.app/webhook/telegram/<TG_WEBHOOK_SECRET>"
+    "url": "https://evacorebot-artem1990.amvera.io/webhook/telegram/<TG_WEBHOOK_SECRET>"
   }'
 ```
 
 Замените:
 - `<TELEGRAM_BOT_TOKEN>` на ваш токен
-- `your-app` на имя вашего приложения
 - `<TG_WEBHOOK_SECRET>` на значение из переменных окружения
 
 Проверка webhook:
@@ -109,7 +108,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 ### 4.1 Обновление Redirect URL в Bitrix24
 
 1. Вернитесь в настройки приложения в Bitrix24
-2. Укажите Redirect URI: `https://your-app.amvera.app/oauth/bitrix/callback`
+2. Укажите Redirect URI: `https://evacorebot-artem1990.amvera.io/oauth/bitrix/callback`
 3. Сохраните
 
 ### 4.2 Авторизация бота
@@ -124,7 +123,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 **Авторизация:**
 
-1. Откройте в браузере: `https://your-app.amvera.app/oauth/bitrix`
+1. Откройте в браузере: `https://evacorebot-artem1990.amvera.io/oauth/bitrix`
 2. Вы будете перенаправлены на страницу авторизации Bitrix24
 3. Разрешите доступ приложению
 4. После успешной авторизации вы увидите сообщение об успехе
@@ -151,7 +150,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 Проверьте статус приложения:
 ```bash
-curl https://your-app.amvera.app/health
+curl https://evacorebot-artem1990.amvera.io/health
 ```
 
 Ответ должен быть:
@@ -173,6 +172,15 @@ curl https://your-app.amvera.app/health
 1. Проверьте что webhook установлен: `/getWebhookInfo`
 2. Проверьте логи в Amvera Console
 3. Убедитесь что `TG_WEBHOOK_SECRET` совпадает в переменных и URL
+
+## Настройка публичного домена Amvera
+
+В настройках домена используйте:
+- Домен: `evacorebot-artem1990.amvera.io`
+- Тип подключения: `HTTP` (HTTPS выдаётся автоматически)
+- URL путь: оставить пустым
+- Порт: `3000` (совпадает с `app.listen(process.env.PORT || 3000, "0.0.0.0")`)
+- Тумблер домена: включён
 
 ### Проблема: "Missing environment variables"
 

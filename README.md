@@ -40,17 +40,18 @@ npm run start
 ## Деплой в Amvera
 - Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
 - Установите переменные окружения через UI Amvera (`PORT`, `TELEGRAM_WEBHOOK_SECRET` или `TG_WEBHOOK_SECRET`, `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
+- Публичный домен приложения: `evacorebot-artem1990.amvera.io` (внутренний `amvera.app` не используем снаружи)
 
 ## Настройка Telegram webhook
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
-  -d "url=https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>"
+  -d "url=https://evacorebot-artem1990.amvera.io/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
 Вариант с `secret_token` (без секрета в URL):
 ```bash
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
-  -d "url=https://<your-app>.amvera.app/webhook/telegram" \
+  -d "url=https://evacorebot-artem1990.amvera.io/webhook/telegram" \
   -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
 ```
 
@@ -59,7 +60,7 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook" \
 curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 ```
 
-Важно: `https://<your-app>.amvera.app/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
+Важно: `https://evacorebot-artem1990.amvera.io/webhook/telegram/<TELEGRAM_WEBHOOK_SECRET>` — это входная точка для POST-запросов Telegram. Если открыть её в браузере (GET), 404/пусто — ожидаемое поведение.
 
 ## Bitrix24
 - `GET /bitrix/install` — проверка конфигурации (`BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
