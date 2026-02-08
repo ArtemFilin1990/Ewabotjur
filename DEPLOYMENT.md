@@ -122,7 +122,7 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 **Авторизация:**
 
-1. Откройте в браузере: `https://your-app.amvera.app/oauth/bitrix/start`
+1. Откройте в браузере: `https://your-app.amvera.app/oauth/bitrix`
 2. Вы будете перенаправлены на страницу авторизации Bitrix24
 3. Разрешите доступ приложению
 4. После успешной авторизации вы увидите сообщение об успехе
@@ -184,7 +184,7 @@ curl https://your-app.amvera.app/health
 **Решение:**
 1. Убедитесь что Redirect URL правильный
 2. Проверьте что Client ID и Secret верны
-3. Попробуйте заново `/oauth/bitrix/start`
+3. Попробуйте заново `/oauth/bitrix`
 
 ### Проблема: "DaData API error"
 
