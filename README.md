@@ -7,7 +7,7 @@
 - npm
 - Переменные окружения:
   - `PORT` (по умолчанию 3000)
-  - `TELEGRAM_WEBHOOK_SECRET`
+  - `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET` для совместимости)
   - `TELEGRAM_BOT_TOKEN`
   - `BITRIX_CLIENT_ID`
   - `BITRIX_CLIENT_SECRET`
@@ -27,14 +27,14 @@ npm run start
 
 ## Эндпоинты
 - `GET /` — health-check, 200 OK
-- `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` и отвечает в чат через `TELEGRAM_BOT_TOKEN`
+- `POST /webhook/telegram/:secret` — проверяет `TELEGRAM_WEBHOOK_SECRET` (или `TG_WEBHOOK_SECRET`) и отвечает в чат через `TELEGRAM_BOT_TOKEN`
 - `GET /bitrix/install` — отвечает готовностью приложения и наличием Bitrix-конфигурации
 - `POST /bitrix/handler` — принимает события Bitrix24 и эхо-возвращает тело запроса
 - `POST /api/dadata/party` — ищет контрагента по ИНН в DaData (тело `{ "inn": "3525405517" }`)
 
 ## Деплой в Amvera
 - Конфигурация: `amvera.yml` (environment: node, toolchain: npm, version: 18, command: `node index.js`, containerPort: 3000)
-- Установите переменные окружения через UI Amvera (`PORT`, `TELEGRAM_WEBHOOK_SECRET`, `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
+- Установите переменные окружения через UI Amvera (`PORT`, `TELEGRAM_WEBHOOK_SECRET` или `TG_WEBHOOK_SECRET`, `BITRIX_CLIENT_ID`, `BITRIX_CLIENT_SECRET`)
 
 ## Настройка Telegram webhook
 ```bash
