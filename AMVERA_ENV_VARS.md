@@ -4,9 +4,12 @@
 
 ### База данных PostgreSQL
 ```
-DATABASE_URL=postgresql+asyncpg://Artem:Filin1990A!+@<host>:5432/Bearing
+DATABASE_URL=postgresql+asyncpg://<username>:<password>@<host>:5432/<database>
 ```
-**Примечание:** Замените `<host>` на реальный хост базы данных, предоставленный Amvera.
+**Примечание:** 
+- Замените `<username>` и `<password>` на учетные данные пользователя БД
+- Замените `<host>` на реальный хост базы данных, предоставленный Amvera
+- Замените `<database>` на имя вашей базы данных
 
 ### Конфигурация приложения
 ```
@@ -80,27 +83,27 @@ MCP_API_KEY=<mcp-api-key>
 
 ```bash
 # === ОБЯЗАТЕЛЬНЫЕ ===
-DATABASE_URL=postgresql+asyncpg://Artem:Filin1990A!+@postgres.amvera.io:5432/Bearing
+DATABASE_URL=postgresql+asyncpg://<username>:<password>@postgres.amvera.io:5432/<database>
 PORT=3000
-APP_URL=https://ewabotjur.amvera.ru
+APP_URL=https://<your-domain>.amvera.ru
 LOG_LEVEL=info
 
 # Telegram
-TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
-TG_WEBHOOK_SECRET=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+TELEGRAM_BOT_TOKEN=<your-telegram-bot-token>
+TG_WEBHOOK_SECRET=<use-openssl-rand-hex-32>
 
 # DaData
-DADATA_API_KEY=your_dadata_api_key_here
-DADATA_SECRET_KEY=your_dadata_secret_key_here
+DADATA_API_KEY=<your-dadata-api-key>
+DADATA_SECRET_KEY=<your-dadata-secret-key>
 
 # OpenAI
-OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx
+OPENAI_API_KEY=sk-proj-<your-openai-key>
 
 # Bitrix24
-BITRIX_DOMAIN=mycompany.bitrix24.ru
-BITRIX_CLIENT_ID=local.xxxxxxxx.xxxxxxxx
-BITRIX_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
-BITRIX_REDIRECT_URL=https://ewabotjur.amvera.ru/oauth/bitrix/callback
+BITRIX_DOMAIN=<your-company>.bitrix24.ru
+BITRIX_CLIENT_ID=local.<your-client-id>
+BITRIX_CLIENT_SECRET=<your-client-secret>
+BITRIX_REDIRECT_URL=https://<your-domain>.amvera.ru/oauth/bitrix/callback
 
 # === ОПЦИОНАЛЬНЫЕ ===
 OPENAI_MODEL=gpt-4
