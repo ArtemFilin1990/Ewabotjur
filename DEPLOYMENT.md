@@ -42,8 +42,10 @@
 3. Выберите **"From GitHub"**
 4. Выберите репозиторий: `ArtemFilin1990/Ewabotjur`
 5. Ветка: `main`
-6. Toolchain: **Docker** (определится автоматически по Dockerfile)
+6. Toolchain: **Node.js (npm)** (без Dockerfile)
 7. Нажмите **"Deploy"**
+
+> Примечание: для режима node + npm не используйте `Dockerfile` и `requirements.txt` — они не нужны и только раздувают архив деплоя.
 
 ### 2.2 Настройка переменных окружения
 
