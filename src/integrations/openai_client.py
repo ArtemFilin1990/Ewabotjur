@@ -85,7 +85,9 @@ class OpenAIClient:
         }
         
         try:
-            client = get_http_client()
+            client = await get_http_client()
+            # OpenAI GPT analysis can take longer than standard requests (up to 60s)
+            # due to complex reasoning and generation, so we override the default timeout
             response = await client.post(
                 f"{self.BASE_URL}/chat/completions",
                 json=payload,

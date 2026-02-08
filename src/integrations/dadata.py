@@ -44,7 +44,7 @@ class DaDataClient:
         }
         
         try:
-            client = get_http_client()
+            client = await get_http_client()
             response = await client.post(
                 url,
                 json=payload,

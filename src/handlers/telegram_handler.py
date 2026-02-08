@@ -186,7 +186,7 @@ async def _send_single_message(url: str, chat_id: int, text: str) -> None:
     
     try:
         # Используем глобальный клиент
-        http_client = get_http_client()
+        http_client = await get_http_client()
         response = await http_client.post(url, json=payload)
         response.raise_for_status()
         logger.info(

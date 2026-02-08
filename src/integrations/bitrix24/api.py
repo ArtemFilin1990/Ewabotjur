@@ -52,7 +52,7 @@ class BitrixAPIClient:
             params["BOT_ID"] = bot_id
         
         try:
-            client = get_http_client()
+            client = await get_http_client()
             response = await client.post(url, json=params)
             response.raise_for_status()
             
@@ -118,7 +118,7 @@ class BitrixAPIClient:
         request_params["auth"] = access_token
         
         try:
-            client = get_http_client()
+            client = await get_http_client()
             response = await client.post(url, json=request_params)
             response.raise_for_status()
             

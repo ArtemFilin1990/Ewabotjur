@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Ewabotjur application", extra={"operation": "shutdown", "result": "success"})
     
-    # Закрытие HTTP клиента
+    # Close HTTP client
     await close_http_client()
     logger.info("HTTP client closed", extra={"operation": "shutdown", "result": "success"})
 
