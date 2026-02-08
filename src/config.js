@@ -92,7 +92,8 @@ const config = {
   dadataCount: parsePositiveInteger(readEnv('DADATA_COUNT'), DEFAULT_DADATA_COUNT),
   dadataEnabled: parseBoolean(readEnv('ENABLE_DADATA') ?? 'true'),
   dadataInnLengths: DADATA_INN_LENGTHS,
-  telegramWebhookSecret: readEnv('TELEGRAM_WEBHOOK_SECRET'),
+  telegramWebhookSecret:
+    readEnv('TELEGRAM_WEBHOOK_SECRET') ?? readEnv('TG_WEBHOOK_SECRET'),
   telegramBotToken: readEnv('TELEGRAM_BOT_TOKEN'),
 };
 

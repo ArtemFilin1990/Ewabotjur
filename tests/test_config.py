@@ -41,7 +41,17 @@ class TestConfig(unittest.TestCase):
         settings = Settings()
         expected = "https://test.amvera.app/webhook/telegram/secret123"
         self.assertEqual(settings.telegram_webhook_url, expected)
-    
+
+    @patch.dict(os.environ, {
+        "APP_URL": "https://test.amvera.app",
+        "TELEGRAM_WEBHOOK_SECRET": "telegram_secret",
+    })
+    def test_telegram_webhook_url_from_telegram_secret(self):
+        """Тест формирования URL когда используется TELEGRAM_WEBHOOK_SECRET"""
+        settings = Settings()
+        expected = "https://test.amvera.app/webhook/telegram/telegram_secret"
+        self.assertEqual(settings.telegram_webhook_url, expected)
+
     @patch.dict(os.environ, {
         "TELEGRAM_BOT_TOKEN": "token",
         "TG_WEBHOOK_SECRET": "secret",
