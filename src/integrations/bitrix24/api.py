@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 
 from src.config import settings
 from src.integrations.bitrix24.oauth import get_access_token
+from src.utils.http import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -51,29 +52,29 @@ class BitrixAPIClient:
             params["BOT_ID"] = bot_id
         
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, json=params)
-                response.raise_for_status()
-                
-                data = response.json()
-                
-                if data.get("error"):
-                    logger.error(
-                        "Bitrix24 API error",
-                        extra={
-                            "operation": "bitrix.message.send",
-                            "result": "error",
-                            "dialog_id": dialog_id,
-                            "error": data.get("error"),
-                        },
-                    )
-                    raise Exception(f"Bitrix24 API error: {data['error_description']}")
-
-                logger.info(
-                    "Message sent to Bitrix dialog",
-                    extra={"operation": "bitrix.message.send", "result": "success", "dialog_id": dialog_id},
+            client = await get_http_client()
+            response = await client.post(url, json=params)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if data.get("error"):
+                logger.error(
+                    "Bitrix24 API error",
+                    extra={
+                        "operation": "bitrix.message.send",
+                        "result": "error",
+                        "dialog_id": dialog_id,
+                        "error": data.get("error"),
+                    },
                 )
-                return data
+                raise Exception(f"Bitrix24 API error: {data['error_description']}")
+
+            logger.info(
+                "Message sent to Bitrix dialog",
+                extra={"operation": "bitrix.message.send", "result": "success", "dialog_id": dialog_id},
+            )
+            return data
         
         except httpx.HTTPStatusError as e:
             logger.error(
@@ -117,25 +118,25 @@ class BitrixAPIClient:
         request_params["auth"] = access_token
         
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, json=request_params)
-                response.raise_for_status()
-                
-                data = response.json()
-                
-                if data.get("error"):
-                    logger.error(
-                        "Bitrix24 API error",
-                        extra={
-                            "operation": "bitrix.api.call",
-                            "result": "error",
-                            "method": method,
-                            "error": data.get("error"),
-                        },
-                    )
-                    raise Exception(f"Bitrix24 API error: {data['error_description']}")
-                
-                return data
+            client = await get_http_client()
+            response = await client.post(url, json=request_params)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if data.get("error"):
+                logger.error(
+                    "Bitrix24 API error",
+                    extra={
+                        "operation": "bitrix.api.call",
+                        "result": "error",
+                        "method": method,
+                        "error": data.get("error"),
+                    },
+                )
+                raise Exception(f"Bitrix24 API error: {data['error_description']}")
+            
+            return data
         
         except httpx.HTTPStatusError as e:
             logger.error(
