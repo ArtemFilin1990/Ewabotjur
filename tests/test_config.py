@@ -78,6 +78,7 @@ class TestConfig(unittest.TestCase):
         self.assertGreater(len(missing), 0)
         self.assertIn("TELEGRAM_BOT_TOKEN", missing)
         self.assertIn("DADATA_API_KEY", missing)
+        self.assertIn("DATABASE_URL", missing)
 
 
 if __name__ == "__main__":
