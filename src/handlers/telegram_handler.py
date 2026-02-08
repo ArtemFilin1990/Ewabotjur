@@ -3,17 +3,14 @@
 """
 import logging
 from typing import Dict, Any, List
-import httpx
 
 from src.config import settings
 from src.utils.inn_parser import extract_inn, validate_inn
 from src.integrations.dadata import dadata_client
 from src.integrations.openai_client import openai_client
+from src.utils.http import get_http_client
 
 logger = logging.getLogger(__name__)
-
-# Глобальный клиент для переиспользования соединений
-http_client = httpx.AsyncClient(timeout=30.0)
 
 
 async def handle_telegram_update(update: Dict[str, Any]) -> None:
@@ -189,6 +186,7 @@ async def _send_single_message(url: str, chat_id: int, text: str) -> None:
     
     try:
         # Используем глобальный клиент
+        http_client = await get_http_client()
         response = await http_client.post(url, json=payload)
         response.raise_for_status()
         logger.info(

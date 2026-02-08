@@ -6,6 +6,7 @@ import httpx
 from typing import Optional, Dict, Any
 
 from src.config import settings
+from src.utils.http import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -43,29 +44,29 @@ class DaDataClient:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    url,
-                    json=payload,
-                    headers=self.headers
+            client = await get_http_client()
+            response = await client.post(
+                url,
+                json=payload,
+                headers=self.headers
+            )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get("suggestions") and len(data["suggestions"]) > 0:
+                suggestion = data["suggestions"][0]
+                logger.info(
+                    "Found company data",
+                    extra={"operation": "dadata.find", "result": "success", "inn": inn},
                 )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                if data.get("suggestions") and len(data["suggestions"]) > 0:
-                    suggestion = data["suggestions"][0]
-                    logger.info(
-                        "Found company data",
-                        extra={"operation": "dadata.find", "result": "success", "inn": inn},
-                    )
-                    return self._parse_company_data(suggestion)
-                else:
-                    logger.warning(
-                        "No data found",
-                        extra={"operation": "dadata.find", "result": "not_found", "inn": inn},
-                    )
-                    return None
+                return self._parse_company_data(suggestion)
+            else:
+                logger.warning(
+                    "No data found",
+                    extra={"operation": "dadata.find", "result": "not_found", "inn": inn},
+                )
+                return None
         
         except httpx.HTTPStatusError as e:
             logger.error(
