@@ -63,3 +63,21 @@ curl https://<ваш_домен>.amvera.io/health
 ```json
 {"status":"ok"}
 ```
+
+## ⚠️ Важно: Задачи cron на Amvera
+
+**НЕ используйте** активацию виртуального окружения в cron задачах на Amvera!
+
+❌ **НЕПРАВИЛЬНО:**
+```bash
+source /app/venv/bin/activate && python script.py
+```
+
+✅ **ПРАВИЛЬНО:**
+```bash
+python script.py
+```
+
+Amvera автоматически управляет Python окружением. Попытка активировать несуществующий venv приведет к ошибке.
+
+Подробнее: [AMVERA_CRON_FIX.md](./AMVERA_CRON_FIX.md)

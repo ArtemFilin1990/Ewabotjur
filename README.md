@@ -29,13 +29,17 @@ Telegram + Bitrix24 бот для анализа контрагентов по �
 - `MCP_API_KEY`
 
 ## Установка и запуск
+
+### Локальная разработка
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # На Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 export DATABASE_URL="postgresql+asyncpg://user:pass@host:5432/dbname"
 python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
 ```
+
+> **Важно для Amvera:** На платформе Amvera виртуальное окружение создается автоматически. **НЕ** добавляйте команды активации venv в cron задачи или скрипты на Amvera. См. [AMVERA_CRON_FIX.md](./AMVERA_CRON_FIX.md) для деталей.
 
 ## Эндпоинты
 - `GET /` — базовый статус
@@ -66,3 +70,13 @@ curl -s "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 ```bash
 pytest -q
 ```
+
+## Troubleshooting
+
+### Ошибка: "bash: line 1: /app/venv/bin/activate: No such file or directory"
+Эта ошибка возникает при неправильной настройке cron задач на Amvera. См. подробное руководство: [AMVERA_CRON_FIX.md](./AMVERA_CRON_FIX.md)
+
+### Другие проблемы
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Инструкции по деплою
+- [AMVERA_ENV_VARS.md](./AMVERA_ENV_VARS.md) - Настройка переменных окружения
+- [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md) - Production чеклист
