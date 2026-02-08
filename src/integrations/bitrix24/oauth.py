@@ -13,6 +13,7 @@ from src.storage.bitrix_tokens import (
     save_tokens,
     BitrixTokenRecord,
 )
+from src.utils.http import get_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +78,20 @@ class BitrixOAuthManager:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, data=payload)
-                response.raise_for_status()
-                
-                token_data = response.json()
-                
-                # Сохранение токенов
-                await save_tokens(token_data, self.domain)
-                
-                logger.info(
-                    "Successfully exchanged code for tokens",
-                    extra={"operation": "bitrix.oauth.exchange", "result": "success"},
-                )
-                return token_data
+            client = await get_http_client()
+            response = await client.post(url, data=payload)
+            response.raise_for_status()
+
+            token_data = response.json()
+
+            # Сохранение токенов
+            await save_tokens(token_data, self.domain)
+
+            logger.info(
+                "Successfully exchanged code for tokens",
+                extra={"operation": "bitrix.oauth.exchange", "result": "success"},
+            )
+            return token_data
         
         except httpx.HTTPStatusError as e:
             logger.error(
@@ -132,20 +133,20 @@ class BitrixOAuthManager:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(url, data=payload)
-                response.raise_for_status()
-                
-                new_tokens = response.json()
-                
-                # Сохранение новых токенов
-                await save_tokens(new_tokens, self.domain)
-                
-                logger.info(
-                    "Successfully refreshed access token",
-                    extra={"operation": "bitrix.oauth.refresh", "result": "success"},
-                )
-                return new_tokens
+            client = await get_http_client()
+            response = await client.post(url, data=payload)
+            response.raise_for_status()
+
+            new_tokens = response.json()
+
+            # Сохранение новых токенов
+            await save_tokens(new_tokens, self.domain)
+
+            logger.info(
+                "Successfully refreshed access token",
+                extra={"operation": "bitrix.oauth.refresh", "result": "success"},
+            )
+            return new_tokens
         
         except httpx.HTTPStatusError as e:
             logger.error(
