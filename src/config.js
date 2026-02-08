@@ -58,10 +58,11 @@ function requireEnv(name) {
 }
 
 /**
- * @returns {string[]}
+ * @returns {{ issues: string[], missingRequired: string[] }}
  */
 function validateConfig() {
   const issues = [];
+  const missingRequired = [];
   if (config.httpTimeoutSeconds <= 0) {
     issues.push('HTTP_TIMEOUT_SECONDS must be greater than 0');
   }
@@ -69,12 +70,20 @@ function validateConfig() {
     issues.push('DADATA_COUNT must be greater than 0');
   }
   if (!config.telegramWebhookSecret) {
-    issues.push('TELEGRAM_WEBHOOK_SECRET is not set');
+    missingRequired.push('TELEGRAM_WEBHOOK_SECRET is not set');
   }
   if (!config.telegramBotToken) {
-    issues.push('TELEGRAM_BOT_TOKEN is not set');
+    missingRequired.push('TELEGRAM_BOT_TOKEN is not set');
   }
-  return issues;
+  if (config.dadataEnabled) {
+    if (!readEnv('DADATA_API_KEY')) {
+      missingRequired.push('DADATA_API_KEY is not set');
+    }
+    if (!readEnv('DADATA_SECRET_KEY')) {
+      missingRequired.push('DADATA_SECRET_KEY is not set');
+    }
+  }
+  return { issues, missingRequired };
 }
 
 const config = {

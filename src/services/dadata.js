@@ -1,4 +1,3 @@
-const axios = require('axios');
 const { config, requireEnv } = require('../config');
 const { logError } = require('../utils/logger');
 
@@ -10,6 +9,7 @@ const DADATA_TIMEOUT_MS = Math.round(config.httpTimeoutSeconds * 1000);
  * @returns {Promise<unknown>}
  */
 async function findPartyByInn(inn, options = {}) {
+  const axios = require('axios');
   const apiKey = requireEnv('DADATA_API_KEY');
   const secret = requireEnv('DADATA_SECRET_KEY');
   const count = options.count ?? config.dadataCount;
