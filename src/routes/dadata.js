@@ -1,7 +1,7 @@
 const express = require('express');
-const { config, readEnv } = require('../config');
+const { config } = require('../config');
 const { findPartyByInn, normalizeParty, logDadataError } = require('../services/dadata');
-const { logInfo, logWarn } = require('../utils/logger');
+const { logInfo } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -30,7 +30,7 @@ function validateInn(inn) {
 }
 
 router.post('/dadata/party', async (req, res) => {
-  if (!config.dadataEnabled) {
+  if (!config.dadataEnabled || !config.dadataAvailable) {
     return res.status(503).json({ error: 'dadata module is disabled' });
   }
 
@@ -42,16 +42,6 @@ router.post('/dadata/party', async (req, res) => {
   const validation = validateInn(inn);
   if (!validation.ok) {
     return res.status(400).json({ error: validation.reason });
-  }
-
-  const apiKey = readEnv('DADATA_API_KEY');
-  const secret = readEnv('DADATA_SECRET_KEY');
-  if (!apiKey || !secret) {
-    logWarn('DaData configuration missing', {
-      operation: 'dadata.party',
-      result: 'error',
-    });
-    return res.status(503).json({ error: 'dadata is not configured' });
   }
 
   try {

@@ -11,6 +11,14 @@ const router = express.Router();
  * @returns {Promise<void>}
  */
 router.post('/:secret', async (req, res) => {
+  if (!config.telegramAvailable) {
+    logWarn('Telegram webhook is disabled', {
+      operation: 'telegram.webhook',
+      result: 'disabled',
+    });
+    return res.status(503).json({ ok: false, error: 'telegram module is disabled' });
+  }
+
   const { secret } = req.params;
 
   if (!config.telegramWebhookSecret || secret !== config.telegramWebhookSecret) {
