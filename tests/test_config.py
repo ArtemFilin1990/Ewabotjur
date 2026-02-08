@@ -28,7 +28,7 @@ class TestConfig(unittest.TestCase):
     def test_settings_defaults(self):
         """Тест значений по умолчанию"""
         settings = Settings()
-        self.assertEqual(settings.port, 3000)
+        self.assertEqual(settings.port, 80)
         self.assertEqual(settings.log_level, "INFO")
         self.assertEqual(settings.openai_model, "gpt-4")
     

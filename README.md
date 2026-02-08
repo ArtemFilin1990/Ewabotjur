@@ -8,7 +8,7 @@ Telegram + Bitrix24 бот для анализа контрагентов по �
 
 ## Переменные окружения
 Обязательные:
-- `PORT` (по умолчанию 3000)
+- `PORT` (по умолчанию 80)
 - `APP_URL`
 - `LOG_LEVEL`
 - `TELEGRAM_BOT_TOKEN`
@@ -34,7 +34,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 export DATABASE_URL="postgresql+asyncpg://user:pass@host:5432/dbname"
-python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
+python -m uvicorn src.main:app --host 0.0.0.0 --port 80
 ```
 
 ## Эндпоинты

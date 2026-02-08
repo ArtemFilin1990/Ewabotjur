@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     )
 
     # Общие настройки
-    port: int = Field(default=3000, validation_alias="PORT")
+    port: int = Field(default=80, validation_alias="PORT")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
-    app_url: str = Field(default="http://localhost:3000", validation_alias="APP_URL")
+    app_url: str = Field(default="http://localhost:80", validation_alias="APP_URL")
     
     # Telegram Bot
     telegram_bot_token: str = Field(default="", validation_alias="TELEGRAM_BOT_TOKEN")
