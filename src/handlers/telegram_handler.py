@@ -33,14 +33,26 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
     # Извлечение данных из сообщения
     chat_id = message.get("chat", {}).get("id")
     text = message.get("text", "")
-    
+
     if not chat_id:
         logger.warning(
             "No chat_id in message",
             extra={"operation": "telegram.message", "result": "invalid"},
         )
         return
-    
+
+    # Ограничение длины входящего текста для защиты от атак
+    if len(text) > 1000:
+        logger.warning(
+            "Message too long",
+            extra={"operation": "telegram.message", "result": "rejected", "length": len(text)},
+        )
+        await send_telegram_message(
+            chat_id,
+            "❌ Сообщение слишком длинное. Пожалуйста, отправьте ИНН (10 или 12 цифр)."
+        )
+        return
+
     logger.info(
         "Processing Telegram message",
         extra={
