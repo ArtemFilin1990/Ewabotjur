@@ -1,13 +1,11 @@
 meta:
-  environment: python
+  environment: docker
   toolchain:
-    name: pip
-  version: 3.11
+    name: docker
 
 build:
-  requirementsPath: requirements.txt
+  dockerfile: Dockerfile
 
 run:
-  command: python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
   containerPort: 3000
   persistenceMount: /data
