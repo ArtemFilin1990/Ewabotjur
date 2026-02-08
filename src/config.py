@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     bitrix_redirect_url: str = Field(default="", validation_alias="BITRIX_REDIRECT_URL")
 
     # Database
-    database_url: str = Field(default="", validation_alias="DATABASE_URL")
+    database_url: str = Field(..., validation_alias="DATABASE_URL")
     
     # MCP (опционально)
     use_mcp: bool = Field(default=False, validation_alias="USE_MCP")
