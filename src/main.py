@@ -3,6 +3,7 @@
 Обрабатывает webhook от Telegram и Bitrix24
 """
 import logging
+import re as _re
 import time
 from uuid import uuid4
 from contextlib import asynccontextmanager
@@ -237,8 +238,6 @@ def _parse_bitrix_form(form_data) -> dict:
         current[parts[-1]] = value
     return event_dict
 
-
-import re as _re
 
 _BRACKET_RE = _re.compile(r"[^\[\]]+")
 
