@@ -1,6 +1,7 @@
 const express = require('express');
 const { config } = require('../config');
 const { findPartyByInn, normalizeParty, logDadataError } = require('../services/dadata');
+const { extractInn, validateInn } = require('../utils/inn');
 const { logInfo } = require('../utils/logger');
 
 const router = express.Router();
@@ -13,20 +14,6 @@ function normalizeInn(value) {
   if (!value) return null;
   const trimmed = String(value).trim();
   return trimmed === '' ? null : trimmed;
-}
-
-/**
- * @param {string} inn
- * @returns {{ ok: boolean, reason?: string }}
- */
-function validateInn(inn) {
-  if (!/^\d+$/.test(inn)) {
-    return { ok: false, reason: 'inn must contain only digits' };
-  }
-  if (!config.dadataInnLengths.includes(inn.length)) {
-    return { ok: false, reason: 'inn must be 10 or 12 digits long' };
-  }
-  return { ok: true };
 }
 
 router.post('/dadata/party', async (req, res) => {
