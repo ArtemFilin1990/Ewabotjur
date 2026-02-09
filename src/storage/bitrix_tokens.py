@@ -37,7 +37,9 @@ async def ensure_schema() -> None:
     try:
         async with engine.begin() as connection:
             await connection.execute(text(CREATE_TABLE_SQL))
-    except Exception as exc:
+    except Exception:
+        # Silently ignore errors during schema creation
+        pass
 
 async def save_tokens(tokens: Dict[str, Any], domain: str) -> None:
     """Persist tokens to the database."""
