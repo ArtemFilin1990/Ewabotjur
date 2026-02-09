@@ -310,8 +310,8 @@ def _format_bitrix_response(company_data: Dict[str, Any], analysis: str) -> str:
         parts.append(f"\n📜 ЛИЦЕНЗИИ ({len(licenses)})")
         for lic in licenses[:3]:
             num = lic.get("number", "—")
-            activities = lic.get("activities")
-            act_str = activities[0] if activities else ""
+            activities = lic.get("activities") or []
+            act_str = activities[0] if len(activities) > 0 else ""
             parts.append(f"  • №{num} {act_str}")
         if len(licenses) > 3:
             parts.append(f"  ...и ещё {len(licenses) - 3}")

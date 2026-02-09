@@ -220,7 +220,8 @@ class OpenAIClient:
         okveds = data.get("okveds")
         if okveds:
             codes_str = ", ".join(
-                f"{o.get('code', '')} ({o.get('name', '')})" for o in okveds[:10]
+                f"{o.get('code', '')}" + (f" ({o['name']})" if o.get('name') else "")
+                for o in okveds[:10]
             )
             parts.append(f"**Все ОКВЭД:** {codes_str}")
 
