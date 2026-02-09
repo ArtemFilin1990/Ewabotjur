@@ -59,10 +59,14 @@ async def lifespan(app: FastAPI):
             "Bitrix token storage ready",
             extra={"operation": "bitrix.storage", "result": "success"},
         )
-    except RuntimeError:
+    except RuntimeError as exc:
         logger.warning(
-            "Database is not configured; Bitrix OAuth will be unavailable",
-            extra={"operation": "bitrix.storage", "result": "warning"},
+            "Bitrix token storage is unavailable; Bitrix OAuth will be disabled",
+            extra={
+                "operation": "bitrix.storage",
+                "result": "warning",
+                "reason": str(exc),
+            },
         )
     except Exception:
         logger.error(
