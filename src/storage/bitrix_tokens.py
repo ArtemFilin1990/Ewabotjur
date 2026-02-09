@@ -38,11 +38,6 @@ async def ensure_schema() -> None:
         async with engine.begin() as connection:
             await connection.execute(text(CREATE_TABLE_SQL))
     except Exception as exc:
-        reason = type(exc).__name__
-        raise RuntimeError(
-            f"Failed to initialize Bitrix token storage ({reason})"
-        ) from exc
-
 
 async def save_tokens(tokens: Dict[str, Any], domain: str) -> None:
     """Persist tokens to the database."""
