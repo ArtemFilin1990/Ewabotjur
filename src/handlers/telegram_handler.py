@@ -124,19 +124,180 @@ async def handle_telegram_update(update: Dict[str, Any]) -> None:
 def _format_response(company_data: Dict[str, Any], analysis: str) -> str:
     parts = []
     parts.append("📊 **ИНФОРМАЦИЯ О КОМПАНИИ**\n")
+
+    # Основные реквизиты
     parts.append(f"**ИНН:** {company_data.get('inn', 'не указан')}")
     parts.append(f"**КПП:** {company_data.get('kpp', 'не указан')}")
     parts.append(f"**ОГРН:** {company_data.get('ogrn', 'не указан')}")
-    
-    if company_data.get("name"):
-        parts.append(f"**Название:** {company_data['name'].get('short', 'не указано')}")
-    
-    if company_data.get("state"):
-        parts.append(f"**Статус:** {company_data['state'].get('status', 'не указан')}")
-    
-    parts.append("\n" + "="*40 + "\n")
+    if company_data.get("ogrn_date"):
+        parts.append(f"**Дата ОГРН:** {company_data['ogrn_date']}")
+
+    # Наименование
+    name = company_data.get("name") or {}
+    if name.get("short_with_opf"):
+        parts.append(f"**Название:** {name['short_with_opf']}")
+    elif name.get("full_with_opf"):
+        parts.append(f"**Название:** {name['full_with_opf']}")
+    if name.get("latin"):
+        parts.append(f"**Латинское:** {name['latin']}")
+
+    # ОПФ
+    opf = company_data.get("opf") or {}
+    if opf.get("full"):
+        parts.append(f"**ОПФ:** {opf['full']}")
+
+    # Тип
+    if company_data.get("type"):
+        parts.append(f"**Тип:** {company_data['type']}")
+
+    # Статус
+    state = company_data.get("state") or {}
+    if state.get("status"):
+        parts.append(f"**Статус:** {state['status']}")
+    if state.get("registration_date"):
+        parts.append(f"**Дата регистрации:** {state['registration_date']}")
+    if state.get("liquidation_date"):
+        parts.append(f"**Дата ликвидации:** {state['liquidation_date']}")
+    if state.get("actuality_date"):
+        parts.append(f"**Актуальность:** {state['actuality_date']}")
+
+    # Адрес
+    address = company_data.get("address") or {}
+    if address.get("value"):
+        parts.append(f"**Адрес:** {address['value']}")
+
+    # Руководство
+    mgmt = company_data.get("management")
+    if mgmt:
+        parts.append(f"**Руководитель:** {mgmt.get('name', '—')} ({mgmt.get('post', '—')})")
+
+    # Уставный капитал
+    capital = company_data.get("capital")
+    if capital:
+        parts.append(f"**Уставный капитал:** {capital.get('value', '—')} ({capital.get('type', '')})")
+
+    # ОКВЭД
+    if company_data.get("okved"):
+        parts.append(f"**ОКВЭД (основной):** {company_data['okved']}")
+    okveds = company_data.get("okveds")
+    if okveds:
+        extra = [o.get("code", "") for o in okveds if not o.get("main")]
+        if extra:
+            parts.append(f"**ОКВЭД (доп.):** {', '.join(extra[:10])}")
+            if len(extra) > 10:
+                parts.append(f"   ...и ещё {len(extra) - 10}")
+
+    # Классификаторы
+    codes = []
+    for code_name, label in [("okpo", "ОКПО"), ("okato", "ОКАТО"),
+                             ("oktmo", "ОКТМО"), ("okogu", "ОКОГУ"),
+                             ("okfs", "ОКФС")]:
+        val = company_data.get(code_name)
+        if val:
+            codes.append(f"{label}: {val}")
+    if codes:
+        parts.append(f"**Коды:** {', '.join(codes)}")
+
+    # Филиалы
+    if company_data.get("branch_type"):
+        parts.append(f"**Тип филиала:** {company_data['branch_type']}")
+    if company_data.get("branch_count"):
+        parts.append(f"**Кол-во филиалов:** {company_data['branch_count']}")
+
+    # Сотрудники
+    if company_data.get("employee_count") is not None:
+        parts.append(f"**Сотрудники:** {company_data['employee_count']}")
+
+    # Финансы
+    finance = company_data.get("finance")
+    if finance:
+        parts.append("\n💰 **ФИНАНСЫ**")
+        if finance.get("year"):
+            parts.append(f"**Год:** {finance['year']}")
+        if finance.get("tax_system"):
+            parts.append(f"**Система налогообложения:** {finance['tax_system']}")
+        if finance.get("revenue") is not None:
+            parts.append(f"**Выручка:** {finance['revenue']}")
+        if finance.get("income") is not None:
+            parts.append(f"**Доход:** {finance['income']}")
+        if finance.get("expense") is not None:
+            parts.append(f"**Расходы:** {finance['expense']}")
+        if finance.get("debt") is not None:
+            parts.append(f"**Задолженность:** {finance['debt']}")
+        if finance.get("penalty") is not None:
+            parts.append(f"**Штрафы:** {finance['penalty']}")
+
+    # Учредители
+    founders = company_data.get("founders")
+    if founders:
+        parts.append("\n👥 **УЧРЕДИТЕЛИ**")
+        for f in founders[:5]:
+            fname = f.get("name") or ""
+            fio = f.get("fio")
+            if fio:
+                fname = " ".join(
+                    filter(None, [fio.get("surname"), fio.get("name"), fio.get("patronymic")])
+                ) or fname
+            share = f.get("share")
+            share_str = ""
+            if share and share.get("value"):
+                share_str = f" ({share['value']}%)" if share.get("type") == "PERCENT" else f" (доля: {share['value']})"
+            parts.append(f"  • {fname}{share_str}")
+        if len(founders) > 5:
+            parts.append(f"  ...и ещё {len(founders) - 5}")
+
+    # Руководители (managers)
+    managers = company_data.get("managers")
+    if managers:
+        parts.append("\n👔 **РУКОВОДИТЕЛИ**")
+        for m in managers[:5]:
+            mname = m.get("name") or ""
+            fio = m.get("fio")
+            if fio:
+                mname = " ".join(
+                    filter(None, [fio.get("surname"), fio.get("name"), fio.get("patronymic")])
+                ) or mname
+            post = m.get("post", "")
+            parts.append(f"  • {mname} — {post}")
+        if len(managers) > 5:
+            parts.append(f"  ...и ещё {len(managers) - 5}")
+
+    # Лицензии
+    licenses = company_data.get("licenses")
+    if licenses:
+        parts.append(f"\n📜 **ЛИЦЕНЗИИ** ({len(licenses)})")
+        for lic in licenses[:3]:
+            num = lic.get("number", "—")
+            activities = lic.get("activities")
+            act_str = activities[0] if activities else ""
+            parts.append(f"  • №{num} {act_str}")
+        if len(licenses) > 3:
+            parts.append(f"  ...и ещё {len(licenses) - 3}")
+
+    # Контакты
+    phones = company_data.get("phones")
+    if phones:
+        parts.append(f"**Телефоны:** {', '.join(phones[:5])}")
+    emails = company_data.get("emails")
+    if emails:
+        parts.append(f"**Email:** {', '.join(emails[:5])}")
+
+    # Правопредшественники / правопреемники
+    predecessors = company_data.get("predecessors")
+    if predecessors:
+        parts.append("\n🔄 **Правопредшественники:**")
+        for p in predecessors[:3]:
+            parts.append(f"  • {p.get('name', '—')} (ИНН {p.get('inn', '—')})")
+
+    successors = company_data.get("successors")
+    if successors:
+        parts.append("\n🔄 **Правопреемники:**")
+        for s in successors[:3]:
+            parts.append(f"  • {s.get('name', '—')} (ИНН {s.get('inn', '—')})")
+
+    parts.append("\n" + "=" * 40 + "\n")
     parts.append(analysis)
-    
+
     return "\n".join(parts)
 
 

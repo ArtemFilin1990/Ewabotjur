@@ -165,52 +165,164 @@ class OpenAIClient:
         
         parts.append("Проанализируй следующую компанию:\n")
         
-        # Основные данные
+        # Основные реквизиты
         parts.append(f"**ИНН:** {data.get('inn', 'не указан')}")
         parts.append(f"**КПП:** {data.get('kpp', 'не указан')}")
         parts.append(f"**ОГРН:** {data.get('ogrn', 'не указан')}")
-        
+        if data.get("ogrn_date"):
+            parts.append(f"**Дата ОГРН:** {data['ogrn_date']}")
+        if data.get("type"):
+            parts.append(f"**Тип:** {data['type']}")
+
         # Название
-        if data.get("name"):
-            parts.append(f"**Полное название:** {data['name'].get('full', 'не указано')}")
-            parts.append(f"**Краткое название:** {data['name'].get('short', 'не указано')}")
-        
+        name = data.get("name") or {}
+        if name.get("full_with_opf"):
+            parts.append(f"**Полное название:** {name['full_with_opf']}")
+        if name.get("short_with_opf"):
+            parts.append(f"**Краткое название:** {name['short_with_opf']}")
+        if name.get("latin"):
+            parts.append(f"**Латинское название:** {name['latin']}")
+
+        # ОПФ
+        opf = data.get("opf") or {}
+        if opf.get("full"):
+            parts.append(f"**ОПФ:** {opf['full']}")
+
+        # Статус
+        state = data.get("state") or {}
+        if state.get("status"):
+            parts.append(f"**Статус:** {state['status']}")
+        if state.get("registration_date"):
+            parts.append(f"**Дата регистрации:** {state['registration_date']}")
+        if state.get("liquidation_date"):
+            parts.append(f"**Дата ликвидации:** {state['liquidation_date']}")
+        if state.get("actuality_date"):
+            parts.append(f"**Актуальность данных:** {state['actuality_date']}")
+
+        # Адрес
+        address = data.get("address") or {}
+        if address.get("value"):
+            parts.append(f"**Адрес:** {address['value']}")
+
+        # Руководство
+        mgmt = data.get("management")
+        if mgmt:
+            parts.append(f"**Руководитель:** {mgmt.get('name', 'не указан')} ({mgmt.get('post', 'должность не указана')})")
+
+        # Уставный капитал
+        capital = data.get("capital")
+        if capital:
+            parts.append(f"**Уставный капитал:** {capital.get('value', '—')} ({capital.get('type', '')})")
+
         # ОКВЭД
         if data.get("okved"):
-            parts.append(f"**ОКВЭД:** {data['okved']}")
-        
-        # Адрес
-        if data.get("address", {}).get("value"):
-            parts.append(f"**Адрес:** {data['address']['value']}")
-        
-        # Руководство
-        if data.get("management"):
-            mgmt = data["management"]
-            parts.append(f"**Руководитель:** {mgmt.get('name', 'не указан')} ({mgmt.get('post', 'должность не указана')})")
-        
-        # Статус
-        if data.get("state"):
-            state = data["state"]
-            parts.append(f"**Статус:** {state.get('status', 'не указан')}")
-            if state.get("registration_date"):
-                parts.append(f"**Дата регистрации:** {state['registration_date']}")
-            if state.get("liquidation_date"):
-                parts.append(f"**Дата ликвидации:** {state['liquidation_date']}")
-        
-        # Финансовые данные (если есть)
-        if data.get("finance"):
-            finance = data["finance"]
-            parts.append("\n**Финансовые показатели:**")
-            parts.append(f"- Выручка: {finance.get('revenue', 'нет данных')}")
-            parts.append(f"- Расходы: {finance.get('expense', 'нет данных')}")
-            parts.append(f"- Прибыль: {finance.get('profit', 'нет данных')}")
-            parts.append(f"- Год: {finance.get('year', 'нет данных')}")
-        else:
-            parts.append("\n⚠️ **Финансовые данные недоступны на текущем тарифе DaData**")
-        
+            parts.append(f"**ОКВЭД (основной):** {data['okved']}")
+        okveds = data.get("okveds")
+        if okveds:
+            codes_str = ", ".join(
+                f"{o.get('code', '')} ({o.get('name', '')})" for o in okveds[:10]
+            )
+            parts.append(f"**Все ОКВЭД:** {codes_str}")
+
+        # Классификаторы
+        for code_name, label in [("okpo", "ОКПО"), ("okato", "ОКАТО"),
+                                 ("oktmo", "ОКТМО"), ("okogu", "ОКОГУ"),
+                                 ("okfs", "ОКФС")]:
+            val = data.get(code_name)
+            if val:
+                parts.append(f"**{label}:** {val}")
+
+        # Филиалы
+        if data.get("branch_type"):
+            parts.append(f"**Тип филиала:** {data['branch_type']}")
+        if data.get("branch_count"):
+            parts.append(f"**Количество филиалов:** {data['branch_count']}")
+
         # Количество сотрудников
-        if data.get("employee_count"):
+        if data.get("employee_count") is not None:
             parts.append(f"**Количество сотрудников:** {data['employee_count']}")
+
+        # Финансовые данные
+        finance = data.get("finance")
+        if finance:
+            parts.append("\n**Финансовые показатели:**")
+            if finance.get("year"):
+                parts.append(f"- Год: {finance['year']}")
+            if finance.get("tax_system"):
+                parts.append(f"- Система налогообложения: {finance['tax_system']}")
+            if finance.get("revenue") is not None:
+                parts.append(f"- Выручка: {finance['revenue']}")
+            if finance.get("income") is not None:
+                parts.append(f"- Доход: {finance['income']}")
+            if finance.get("expense") is not None:
+                parts.append(f"- Расходы: {finance['expense']}")
+            if finance.get("debt") is not None:
+                parts.append(f"- Задолженность: {finance['debt']}")
+            if finance.get("penalty") is not None:
+                parts.append(f"- Штрафы: {finance['penalty']}")
+        else:
+            parts.append("\n⚠️ **Финансовые данные отсутствуют в ответе DaData**")
+
+        # Учредители
+        founders = data.get("founders")
+        if founders:
+            parts.append("\n**Учредители:**")
+            for f in founders[:10]:
+                fname = f.get("name") or ""
+                fio = f.get("fio")
+                if fio:
+                    fname = " ".join(
+                        filter(None, [fio.get("surname"), fio.get("name"), fio.get("patronymic")])
+                    ) or fname
+                share = f.get("share")
+                share_str = ""
+                if share and share.get("value"):
+                    share_str = f" ({share['value']}%)" if share.get("type") == "PERCENT" else f" (доля: {share['value']})"
+                parts.append(f"- {fname}{share_str} [тип: {f.get('type', '—')}]")
+
+        # Руководители (managers)
+        managers = data.get("managers")
+        if managers:
+            parts.append("\n**Руководители:**")
+            for m in managers[:10]:
+                mname = m.get("name") or ""
+                fio = m.get("fio")
+                if fio:
+                    mname = " ".join(
+                        filter(None, [fio.get("surname"), fio.get("name"), fio.get("patronymic")])
+                    ) or mname
+                parts.append(f"- {mname} — {m.get('post', '—')}")
+
+        # Лицензии
+        licenses = data.get("licenses")
+        if licenses:
+            parts.append(f"\n**Лицензии ({len(licenses)}):**")
+            for lic in licenses[:5]:
+                num = lic.get("number", "—")
+                activities = lic.get("activities")
+                act_str = ", ".join(activities) if activities else ""
+                parts.append(f"- №{num}: {act_str}")
+
+        # Контакты
+        phones = data.get("phones")
+        if phones:
+            parts.append(f"**Телефоны:** {', '.join(phones[:5])}")
+        emails = data.get("emails")
+        if emails:
+            parts.append(f"**Email:** {', '.join(emails[:5])}")
+
+        # Правопредшественники / правопреемники
+        predecessors = data.get("predecessors")
+        if predecessors:
+            parts.append("\n**Правопредшественники:**")
+            for p in predecessors:
+                parts.append(f"- {p.get('name', '—')} (ИНН {p.get('inn', '—')})")
+
+        successors = data.get("successors")
+        if successors:
+            parts.append("\n**Правопреемники:**")
+            for s in successors:
+                parts.append(f"- {s.get('name', '—')} (ИНН {s.get('inn', '—')})")
         
         return "\n".join(parts)
 

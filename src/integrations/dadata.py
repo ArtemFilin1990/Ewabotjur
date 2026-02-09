@@ -40,7 +40,6 @@ class DaDataClient:
         
         payload = {
             "query": inn,
-            "type": "LEGAL"  # Юридическое лицо
         }
         
         try:
@@ -97,58 +96,212 @@ class DaDataClient:
     
     def _parse_company_data(self, suggestion: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Парсинг данных компании из ответа DaData
-        
+        Парсинг данных компании из ответа DaData (максимальный тариф).
+
         Args:
             suggestion: Элемент из массива suggestions
-            
+
         Returns:
-            Структурированные данные компании
+            Структурированные данные компании со всеми доступными полями
         """
         data = suggestion.get("data", {})
-        
+
         name = data.get("name") or {}
         address = data.get("address") or {}
         state = data.get("state") or {}
+        opf = data.get("opf") or {}
 
-        # Основные данные
-        result = {
+        result: Dict[str, Any] = {
+            # --- Идентификаторы ---
             "inn": data.get("inn"),
             "kpp": data.get("kpp"),
             "ogrn": data.get("ogrn"),
+            "ogrn_date": data.get("ogrn_date"),
+            "hid": data.get("hid"),
+            "type": data.get("type"),
+
+            # --- Наименование ---
             "name": {
-                "full": name.get("full_with_opf"),
-                "short": name.get("short_with_opf"),
+                "full_with_opf": name.get("full_with_opf"),
+                "short_with_opf": name.get("short_with_opf"),
+                "latin": name.get("latin"),
+                "full": name.get("full"),
+                "short": name.get("short"),
             },
-            "okved": data.get("okved"),
-            "address": {
-                "value": address.get("value"),
-                "data": address.get("data", {})
+
+            # --- ОПФ ---
+            "opf": {
+                "code": opf.get("code"),
+                "full": opf.get("full"),
+                "short": opf.get("short"),
             },
-            "management": data.get("management"),
+
+            # --- Статус ---
             "state": {
                 "status": state.get("status"),
-                "liquidation_date": state.get("liquidation_date"),
+                "code": state.get("code"),
+                "actuality_date": state.get("actuality_date"),
                 "registration_date": state.get("registration_date"),
+                "liquidation_date": state.get("liquidation_date"),
             },
-            "opf": data.get("opf"),
-            "type": data.get("type"),
+
+            # --- Адрес ---
+            "address": {
+                "value": address.get("value"),
+                "unrestricted_value": address.get("unrestricted_value"),
+                "data": address.get("data", {}),
+            },
+
+            # --- Филиалы ---
+            "branch_type": data.get("branch_type"),
+            "branch_count": data.get("branch_count"),
+
+            # --- Руководство ---
+            "management": data.get("management"),
+
+            # --- Классификаторы ---
+            "okved": data.get("okved"),
+            "okved_type": data.get("okved_type"),
+            "okveds": data.get("okveds"),
+            "okpo": data.get("okpo"),
+            "okato": data.get("okato"),
+            "oktmo": data.get("oktmo"),
+            "okogu": data.get("okogu"),
+            "okfs": data.get("okfs"),
+
+            # --- Количество сотрудников ---
+            "employee_count": data.get("employee_count"),
         }
-        
-        # Финансовые данные (если доступны на тарифе)
+
+        # --- Уставный капитал ---
+        capital = data.get("capital")
+        if capital:
+            result["capital"] = {
+                "type": capital.get("type"),
+                "value": capital.get("value"),
+            }
+
+        # --- Учредители ---
+        founders = data.get("founders")
+        if founders:
+            result["founders"] = [
+                {
+                    "ogrn": f.get("ogrn"),
+                    "inn": f.get("inn"),
+                    "name": f.get("name"),
+                    "fio": f.get("fio"),
+                    "hid": f.get("hid"),
+                    "type": f.get("type"),
+                    "share": f.get("share"),
+                }
+                for f in founders
+            ]
+
+        # --- Руководители ---
+        managers = data.get("managers")
+        if managers:
+            result["managers"] = [
+                {
+                    "inn": m.get("inn"),
+                    "fio": m.get("fio"),
+                    "post": m.get("post"),
+                    "name": m.get("name"),
+                    "hid": m.get("hid"),
+                    "type": m.get("type"),
+                }
+                for m in managers
+            ]
+
+        # --- Финансовые данные ---
         finance = data.get("finance")
         if finance:
             result["finance"] = {
-                "revenue": finance.get("revenue"),
+                "tax_system": finance.get("tax_system"),
+                "income": finance.get("income"),
                 "expense": finance.get("expense"),
-                "profit": finance.get("profit"),
+                "revenue": finance.get("revenue"),
+                "debt": finance.get("debt"),
+                "penalty": finance.get("penalty"),
                 "year": finance.get("year"),
             }
-        
-        # Количество сотрудников
-        if "employee_count" in data:
-            result["employee_count"] = data.get("employee_count")
-        
+
+        # --- Контакты ---
+        phones = data.get("phones")
+        if phones:
+            result["phones"] = [p.get("value") for p in phones if p.get("value")]
+
+        emails = data.get("emails")
+        if emails:
+            result["emails"] = [e.get("value") for e in emails if e.get("value")]
+
+        # --- Лицензии ---
+        licenses = data.get("licenses")
+        if licenses:
+            result["licenses"] = [
+                {
+                    "series": lic.get("series"),
+                    "number": lic.get("number"),
+                    "issue_date": lic.get("issue_date"),
+                    "issue_authority": lic.get("issue_authority"),
+                    "suspend_date": lic.get("suspend_date"),
+                    "suspend_authority": lic.get("suspend_authority"),
+                    "valid_from": lic.get("valid_from"),
+                    "valid_to": lic.get("valid_to"),
+                    "activities": lic.get("activities"),
+                    "addresses": lic.get("addresses"),
+                }
+                for lic in licenses
+            ]
+
+        # --- Регистрирующие органы ---
+        authorities = data.get("authorities")
+        if authorities:
+            result["authorities"] = {}
+            for key in ("fts_registration", "fts_report", "pf", "sif"):
+                auth = authorities.get(key)
+                if auth:
+                    result["authorities"][key] = {
+                        "type": auth.get("type"),
+                        "code": auth.get("code"),
+                        "name": auth.get("name"),
+                        "address": auth.get("address"),
+                    }
+
+        # --- Документы ---
+        documents = data.get("documents")
+        if documents:
+            result["documents"] = {}
+            for key in ("fts_registration", "fts_report", "pf_registration",
+                        "sif_registration", "smb"):
+                doc = documents.get(key)
+                if doc:
+                    result["documents"][key] = doc
+
+        # --- Правопредшественники / правопреемники ---
+        predecessors = data.get("predecessors")
+        if predecessors:
+            result["predecessors"] = [
+                {"ogrn": p.get("ogrn"), "inn": p.get("inn"), "name": p.get("name")}
+                for p in predecessors
+            ]
+
+        successors = data.get("successors")
+        if successors:
+            result["successors"] = [
+                {"ogrn": s.get("ogrn"), "inn": s.get("inn"), "name": s.get("name")}
+                for s in successors
+            ]
+
+        # --- Гражданство (для ИП) ---
+        citizenship = data.get("citizenship")
+        if citizenship:
+            result["citizenship"] = citizenship
+
+        # --- ФИО (для ИП) ---
+        fio = data.get("fio")
+        if fio:
+            result["fio"] = fio
+
         return result
 
 
