@@ -161,6 +161,49 @@ class OpenAIClient:
         Returns:
             Отформатированная строка с данными
         """
+        def _format_list(values: Any) -> str:
+            if not values:
+                return "не указано"
+            if isinstance(values, list):
+                return ", ".join(str(item) for item in values if item is not None) or "не указано"
+            return str(values)
+
+        def _format_okveds(okveds: Any) -> str:
+            if not okveds:
+                return "не указано"
+            formatted = []
+            for entry in okveds:
+                if isinstance(entry, dict):
+                    code = entry.get("code")
+                    name = entry.get("name")
+                    if code and name:
+                        formatted.append(f"{code} — {name}")
+                    elif code:
+                        formatted.append(str(code))
+                    elif name:
+                        formatted.append(str(name))
+                else:
+                    formatted.append(str(entry))
+            return "; ".join(formatted) if formatted else "не указано"
+
+        def _format_licenses(licenses: Any) -> str:
+            if not licenses:
+                return "не указано"
+            formatted = []
+            for license_item in licenses:
+                if not isinstance(license_item, dict):
+                    formatted.append(str(license_item))
+                    continue
+                number = license_item.get("number") or "не указан"
+                issue_date = license_item.get("issue_date") or "не указана"
+                expire_date = license_item.get("expire_date") or "не указана"
+                activities = license_item.get("activities") or []
+                activities_text = _format_list(activities)
+                formatted.append(
+                    f"№ {number}, выдача: {issue_date}, окончание: {expire_date}, виды: {activities_text}"
+                )
+            return "; ".join(formatted) if formatted else "не указано"
+
         parts = []
         
         parts.append("Проанализируй следующую компанию:\n")
@@ -169,29 +212,62 @@ class OpenAIClient:
         parts.append(f"**ИНН:** {data.get('inn', 'не указан')}")
         parts.append(f"**КПП:** {data.get('kpp', 'не указан')}")
         parts.append(f"**ОГРН:** {data.get('ogrn', 'не указан')}")
+        parts.append(f"**Дата ОГРН:** {data.get('ogrn_date', 'не указана')}")
+        parts.append(f"**HID:** {data.get('hid', 'не указан')}")
+        parts.append(f"**Тип:** {data.get('type', 'не указан')}")
         
         # Название
         if data.get("name"):
             parts.append(f"**Полное название:** {data['name'].get('full', 'не указано')}")
             parts.append(f"**Краткое название:** {data['name'].get('short', 'не указано')}")
+            parts.append(f"**Название (латиница):** {data['name'].get('latin', 'не указано')}")
+            parts.append(f"**Полное с ОПФ:** {data['name'].get('full_with_opf', 'не указано')}")
+            parts.append(f"**Краткое с ОПФ:** {data['name'].get('short_with_opf', 'не указано')}")
+
+        if data.get("opf"):
+            opf = data["opf"]
+            parts.append(f"**ОПФ код:** {opf.get('code', 'не указан')}")
+            parts.append(f"**ОПФ полное:** {opf.get('full', 'не указано')}")
+            parts.append(f"**ОПФ краткое:** {opf.get('short', 'не указано')}")
         
         # ОКВЭД
         if data.get("okved"):
             parts.append(f"**ОКВЭД:** {data['okved']}")
+        parts.append(f"**Тип ОКВЭД:** {data.get('okved_type', 'не указан')}")
+        parts.append(f"**ОКВЭДы:** {_format_okveds(data.get('okveds'))}")
+
+        parts.append(f"**ОКПО:** {data.get('okpo', 'не указан')}")
+        parts.append(f"**ОКАТО:** {data.get('okato', 'не указан')}")
+        parts.append(f"**ОКТМО:** {data.get('oktmo', 'не указан')}")
+        parts.append(f"**ОКОГУ:** {data.get('okogu', 'не указан')}")
+        parts.append(f"**ОКФС:** {data.get('okfs', 'не указан')}")
         
         # Адрес
         if data.get("address", {}).get("value"):
             parts.append(f"**Адрес:** {data['address']['value']}")
+        if data.get("address", {}).get("unrestricted_value"):
+            parts.append(f"**Адрес (полный):** {data['address']['unrestricted_value']}")
+        parts.append(f"**Тип филиала:** {data.get('branch_type', 'не указан')}")
+        parts.append(f"**Количество филиалов:** {data.get('branch_count', 'не указано')}")
+        if data.get("capital"):
+            parts.append(f"**Уставной капитал:** {data['capital']}")
         
         # Руководство
         if data.get("management"):
             mgmt = data["management"]
-            parts.append(f"**Руководитель:** {mgmt.get('name', 'не указан')} ({mgmt.get('post', 'должность не указана')})")
+            parts.append(
+                f"**Руководитель:** {mgmt.get('name', 'не указан')} "
+                f"({mgmt.get('post', 'должность не указана')})"
+            )
+        parts.append(f"**Менеджеры:** {_format_list(data.get('managers'))}")
+        parts.append(f"**Учредители:** {_format_list(data.get('founders'))}")
         
         # Статус
         if data.get("state"):
             state = data["state"]
             parts.append(f"**Статус:** {state.get('status', 'не указан')}")
+            parts.append(f"**Код статуса:** {state.get('code', 'не указан')}")
+            parts.append(f"**Дата актуальности:** {state.get('actuality_date', 'не указана')}")
             if state.get("registration_date"):
                 parts.append(f"**Дата регистрации:** {state['registration_date']}")
             if state.get("liquidation_date"):
@@ -205,12 +281,26 @@ class OpenAIClient:
             parts.append(f"- Расходы: {finance.get('expense', 'нет данных')}")
             parts.append(f"- Прибыль: {finance.get('profit', 'нет данных')}")
             parts.append(f"- Год: {finance.get('year', 'нет данных')}")
+            parts.append(f"- Налоговый режим: {finance.get('tax_system', 'нет данных')}")
+            parts.append(f"- Доход: {finance.get('income', 'нет данных')}")
+            parts.append(f"- Долг: {finance.get('debt', 'нет данных')}")
+            parts.append(f"- Пени: {finance.get('penalty', 'нет данных')}")
         else:
             parts.append("\n⚠️ **Финансовые данные недоступны на текущем тарифе DaData**")
-        
+
         # Количество сотрудников
         if data.get("employee_count"):
             parts.append(f"**Количество сотрудников:** {data['employee_count']}")
+
+        parts.append(f"**Телефоны:** {_format_list(data.get('phones'))}")
+        parts.append(f"**Email:** {_format_list(data.get('emails'))}")
+        parts.append(f"**Лицензии:** {_format_licenses(data.get('licenses'))}")
+        parts.append(f"**Контролирующие органы:** {_format_list(data.get('authorities'))}")
+        parts.append(f"**Документы:** {_format_list(data.get('documents'))}")
+        parts.append(f"**Предшественники:** {_format_list(data.get('predecessors'))}")
+        parts.append(f"**Правопреемники:** {_format_list(data.get('successors'))}")
+        parts.append(f"**Гражданство:** {data.get('citizenship', 'не указано')}")
+        parts.append(f"**ФИО:** {data.get('fio', 'не указано')}")
         
         return "\n".join(parts)
 
