@@ -73,6 +73,17 @@ class TestEndpoints(unittest.TestCase):
         )
         self.assertEqual(response.headers["x-request-id"], "test-req-123")
 
+    @patch("src.main.initiate_oauth")
+    def test_oauth_bitrix_legacy_start_endpoint(self, mock_initiate_oauth):
+        """GET /oauth/bitrix поддерживается как legacy endpoint."""
+        mock_initiate_oauth.return_value = "https://example.bitrix/auth"
+
+        response = self.client.get("/oauth/bitrix")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"auth_url": "https://example.bitrix/auth"})
+        mock_initiate_oauth.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

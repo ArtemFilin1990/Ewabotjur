@@ -122,3 +122,9 @@ async def oauth_bitrix_callback(code: str | None = None, domain: str | None = No
 async def oauth_bitrix_start(domain: str | None = None):
     _ = domain
     return {"auth_url": initiate_oauth()}
+
+
+@app.get("/oauth/bitrix")
+async def oauth_bitrix_start_legacy(domain: str | None = None):
+    """Legacy OAuth start endpoint kept for backward compatibility."""
+    return await oauth_bitrix_start(domain)
