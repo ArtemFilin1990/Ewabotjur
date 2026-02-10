@@ -40,7 +40,6 @@ class DaDataClient:
         
         payload = {
             "query": inn,
-            "type": "LEGAL"  # Юридическое лицо
         }
         
         try:
@@ -110,29 +109,63 @@ class DaDataClient:
         name = data.get("name") or {}
         address = data.get("address") or {}
         state = data.get("state") or {}
+        opf = data.get("opf") or {}
 
         # Основные данные
         result = {
             "inn": data.get("inn"),
             "kpp": data.get("kpp"),
             "ogrn": data.get("ogrn"),
+            "ogrn_date": data.get("ogrn_date"),
+            "hid": data.get("hid"),
             "name": {
-                "full": name.get("full_with_opf"),
-                "short": name.get("short_with_opf"),
+                "full": name.get("full") or name.get("full_with_opf"),
+                "short": name.get("short") or name.get("short_with_opf"),
+                "latin": name.get("latin"),
+                "full_with_opf": name.get("full_with_opf"),
+                "short_with_opf": name.get("short_with_opf"),
             },
             "okved": data.get("okved"),
+            "okved_type": data.get("okved_type"),
+            "okveds": data.get("okveds") or [],
             "address": {
                 "value": address.get("value"),
+                "unrestricted_value": address.get("unrestricted_value"),
                 "data": address.get("data", {})
             },
             "management": data.get("management"),
+            "managers": data.get("managers") or [],
+            "founders": data.get("founders") or [],
             "state": {
                 "status": state.get("status"),
+                "code": state.get("code"),
+                "actuality_date": state.get("actuality_date"),
                 "liquidation_date": state.get("liquidation_date"),
                 "registration_date": state.get("registration_date"),
             },
-            "opf": data.get("opf"),
+            "opf": {
+                "code": opf.get("code"),
+                "full": opf.get("full"),
+                "short": opf.get("short"),
+            },
             "type": data.get("type"),
+            "branch_type": data.get("branch_type"),
+            "branch_count": data.get("branch_count"),
+            "okpo": data.get("okpo"),
+            "okato": data.get("okato"),
+            "oktmo": data.get("oktmo"),
+            "okogu": data.get("okogu"),
+            "okfs": data.get("okfs"),
+            "capital": data.get("capital"),
+            "phones": data.get("phones") or [],
+            "emails": data.get("emails") or [],
+            "licenses": data.get("licenses") or [],
+            "authorities": data.get("authorities") or [],
+            "documents": data.get("documents") or [],
+            "predecessors": data.get("predecessors") or [],
+            "successors": data.get("successors") or [],
+            "citizenship": data.get("citizenship"),
+            "fio": data.get("fio"),
         }
         
         # Финансовые данные (если доступны на тарифе)
@@ -143,6 +176,10 @@ class DaDataClient:
                 "expense": finance.get("expense"),
                 "profit": finance.get("profit"),
                 "year": finance.get("year"),
+                "tax_system": finance.get("tax_system"),
+                "income": finance.get("income"),
+                "debt": finance.get("debt"),
+                "penalty": finance.get("penalty"),
             }
         
         # Количество сотрудников
