@@ -23,7 +23,12 @@ def _ensure_async_driver(database_url: str) -> str:
 def get_engine() -> AsyncEngine:
     if not settings.database_url:
         raise RuntimeError("DATABASE_URL is not configured")
-    return create_async_engine(_ensure_async_driver(settings.database_url), pool_pre_ping=True)
+    connect_timeout = settings.db_connect_timeout_seconds
+    return create_async_engine(
+        _ensure_async_driver(settings.database_url),
+        pool_pre_ping=True,
+        connect_args={"timeout": connect_timeout, "command_timeout": connect_timeout},
+    )
 
 
 @lru_cache(maxsize=1)

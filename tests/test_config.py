@@ -52,6 +52,14 @@ class TestConfig(unittest.TestCase):
         expected = "https://test.amvera.io/webhook/telegram/telegram_secret"
         self.assertEqual(settings.telegram_webhook_url, expected)
 
+
+    @patch.dict(os.environ, {"DB_CONNECT_TIMEOUT_SECONDS": "120", "STARTUP_DB_REQUIRED": "true"}, clear=True)
+    def test_db_startup_settings_validation(self):
+        """Тест ограничений timeout и флага строгого старта БД"""
+        settings = Settings()
+        self.assertEqual(settings.db_connect_timeout_seconds, 60.0)
+        self.assertTrue(settings.startup_db_required)
+
     @patch.dict(os.environ, {
         "TELEGRAM_BOT_TOKEN": "token",
         "TG_WEBHOOK_SECRET": "secret",

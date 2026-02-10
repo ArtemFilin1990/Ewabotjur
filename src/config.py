@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4", validation_alias="OPENAI_MODEL")
 
     database_url: str = Field(default="", validation_alias="DATABASE_URL")
+    db_connect_timeout_seconds: float = Field(default=5.0, validation_alias="DB_CONNECT_TIMEOUT_SECONDS")
+    startup_db_required: bool = Field(default=False, validation_alias="STARTUP_DB_REQUIRED")
     http_timeout_seconds: float = Field(default=10.0, validation_alias="HTTP_TIMEOUT_SECONDS")
 
     bitrix_domain: str = Field(default="", validation_alias="BITRIX_DOMAIN")
@@ -43,6 +45,11 @@ class Settings(BaseSettings):
     @field_validator("http_timeout_seconds")
     @classmethod
     def _validate_timeout(cls, value: float) -> float:
+        return max(1.0, min(value, 60.0))
+
+    @field_validator("db_connect_timeout_seconds")
+    @classmethod
+    def _validate_db_connect_timeout(cls, value: float) -> float:
         return max(1.0, min(value, 60.0))
 
     def validate_required(self) -> list[str]:

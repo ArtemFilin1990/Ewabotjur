@@ -39,7 +39,24 @@ def _split_bracket_key(key: str) -> list[str]:
 async def lifespan(_: FastAPI):
     logger.info("Application startup", extra={"operation": "startup", "result": "success"})
     if settings.database_url:
-        await migrate()
+        try:
+            await migrate()
+        except Exception:
+            logger.error(
+                "Database migration failed during startup",
+                extra={
+                    "operation": "startup.db_migrate",
+                    "result": "error",
+                    "startup_db_required": settings.startup_db_required,
+                },
+                exc_info=True,
+            )
+            if settings.startup_db_required:
+                raise
+            logger.warning(
+                "Continuing startup in degraded mode because STARTUP_DB_REQUIRED is false",
+                extra={"operation": "startup.db_migrate", "result": "warning"},
+            )
     else:
         logger.warning("DATABASE_URL is empty", extra={"operation": "startup", "result": "warning"})
     yield
