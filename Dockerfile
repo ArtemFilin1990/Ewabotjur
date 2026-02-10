@@ -4,7 +4,10 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     HOME=/tmp \
     XDG_CACHE_HOME=/tmp/.cache \
-    PIP_CACHE_DIR=/tmp/pip-cache
+    PIP_CACHE_DIR=/tmp/pip-cache \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ROOT_USER_ACTION=ignore \
+    PIP_PROGRESS_BAR=off
 
 # Create necessary cache directories
 RUN mkdir -p /tmp/.cache /tmp/pip-cache
