@@ -35,7 +35,7 @@ class TestEndpoints(unittest.TestCase):
         response = self.client.post("/webhook/telegram/wrong_secret")
         self.assertEqual(response.status_code, 403)
 
-    @patch("src.main.handle_telegram_update", new_callable=AsyncMock)
+    @patch("src.main.handle_update", new_callable=AsyncMock)
     @patch("src.main.settings")
     def test_telegram_webhook_valid_secret(self, mock_settings, mock_handler):
         """POST /webhook/telegram/{secret} с валидным секретом → 200"""
