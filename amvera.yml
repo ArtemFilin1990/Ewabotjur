@@ -6,6 +6,12 @@ meta:
 build:
   dockerfile: Dockerfile
 
+env:
+  - name: XDG_CACHE_HOME
+    value: /tmp
+
 run:
+  command: python -m uvicorn src.main:app --host 0.0.0.0 --port 3000
+  scriptName: ""
   containerPort: 3000
   persistenceMount: /data
