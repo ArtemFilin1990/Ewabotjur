@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request, status
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.config import settings
 from src.db.migrate import migrate
@@ -39,7 +40,19 @@ def _split_bracket_key(key: str) -> list[str]:
 async def lifespan(_: FastAPI):
     logger.info("Application startup", extra={"operation": "startup", "result": "success"})
     if settings.database_url:
-        await migrate()
+        try:
+            await migrate()
+        except (TimeoutError, OSError, SQLAlchemyError):
+            logger.exception(
+                "Database migration failed during startup",
+                extra={
+                    "operation": "startup.migrate",
+                    "result": "error",
+                    "database_required_on_startup": settings.database_required_on_startup,
+                },
+            )
+            if settings.database_required_on_startup:
+                raise
     else:
         logger.warning("DATABASE_URL is empty", extra={"operation": "startup", "result": "warning"})
     yield
