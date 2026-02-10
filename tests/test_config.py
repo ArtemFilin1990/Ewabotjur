@@ -53,6 +53,16 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(settings.telegram_webhook_url, expected)
 
     @patch.dict(os.environ, {
+        "DATABASE_CONNECT_TIMEOUT_SECONDS": "2",
+        "DATABASE_REQUIRED_ON_STARTUP": "true",
+    }, clear=True)
+    def test_database_startup_settings(self):
+        """Тест параметров старта базы данных"""
+        settings = Settings()
+        self.assertEqual(settings.database_connect_timeout_seconds, 2.0)
+        self.assertTrue(settings.database_required_on_startup)
+
+    @patch.dict(os.environ, {
         "TELEGRAM_BOT_TOKEN": "token",
         "TG_WEBHOOK_SECRET": "secret",
         "DADATA_API_KEY": "key",

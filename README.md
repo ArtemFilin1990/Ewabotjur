@@ -21,6 +21,8 @@ Telegram + Bitrix24 бот для анализа контрагентов по �
 - `BITRIX_CLIENT_SECRET`
 - `BITRIX_REDIRECT_URL`
 - `DATABASE_URL` (формат: `postgresql+asyncpg://user:pass@host:port/dbname`)
+- `DATABASE_CONNECT_TIMEOUT_SECONDS` (опционально, по умолчанию 5)
+- `DATABASE_REQUIRED_ON_STARTUP` (опционально, по умолчанию `false`)
 
 Опциональные:
 - `OPENAI_MODEL`
