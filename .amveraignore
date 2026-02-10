@@ -1,5 +1,7 @@
 # Ignore local dependencies and secrets to keep Amvera archives clean
 node_modules/
+venv/
+.venv/
 .env
 .env.*
 !.env.example
